@@ -12,9 +12,7 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 #undef ERROR
-#define SPR_NO_STATIC 1
 #define SPR_NO_GLSL_INCLUDE 1
-#define SPR_STATIC extern
 #include "../../../public/headerlibs/ShaderPermute.hpp"
 
 namespace tge::shader {
@@ -46,12 +44,21 @@ inline Format getFormatFromElf(const glslang::TType &format) {
   if (format.isVector() &&
       format.getBasicType() == glslang::TBasicType::EbtFloat) {
     switch (format.getVectorSize()) {
+    case 1:
+      return Format::eR32Sint;
     case 2:
       return Format::eR32G32Sfloat;
     case 3:
       return Format::eR32G32B32Sfloat;
     case 4:
       return Format::eR32G32B32A32Sfloat;
+    }
+  } else {
+    switch (format.getBasicType()) {
+    case glslang::TBasicType::EbtFloat:
+      return Format::eR32Sfloat;
+    case glslang::TBasicType::EbtInt:
+      return Format::eR32Sint;
     }
   }
   throw std::runtime_error(std::string("Couldn't find Format for TType" +
@@ -60,6 +67,9 @@ inline Format getFormatFromElf(const glslang::TType &format) {
 
 inline uint32_t getSizeFromFormat(const Format format) {
   switch (format) {
+  case Format::eR32Sfloat:
+  case Format::eR32Sint:
+    return 4;
   case Format::eR32G32Sfloat:
     return 8;
   case Format::eR32G32B32Sfloat:
@@ -314,8 +324,7 @@ constexpr TBuiltInResource DefaultTBuiltInResource = {
         /* .generalConstantMatrixVectorIndexing = */ 1,
     }};
 
-permute::lookup glslLookup = {{"next", next}};
-std::map<std::string, int> lookupCounter;
+std::string next(const std::string &param) { return permute::next(param); }
 
 void __implCreateDescSets(VulkanShaderPipe *shaderPipe,
                           VulkanShaderModule *vsm) {
@@ -352,11 +361,6 @@ __implGenerateIntermediate(const ShaderInfo &pair) noexcept {
   std::string code(begin(pair.code), end(pair.code));
   const nlohmann::json json = nlohmann::json::parse(code);
   auto permute = permute::fromJson<permute::PermuteGLSL>(json);
-  for (const auto &string : additional) {
-    const auto splitOffset = string.find('_');
-    permute::glslLookup.insert_or_assign(string.substr(0, splitOffset),
-                                         [](auto in) { return splitOffset; });
-  }
   if (!permute.generate(additional)) {
     printf("Error while generating glsl!");
     return std::unique_ptr<glslang::TShader>();
