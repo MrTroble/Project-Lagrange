@@ -21,6 +21,7 @@ int main() {
 
   auto api = getAPILayer();
   auto shader = api->getShaderAPI();
+  
 
   const auto startResult = start();
   if (startResult != Error::NONE) {

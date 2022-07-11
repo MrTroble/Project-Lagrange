@@ -11,6 +11,10 @@
 #include <glslang/SPIRV/SpvTools.h>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
+#undef ERROR
+
+#define SPR_NO_GLSL_INCLUDE 1
+#include "../../../public/headerlibs/ShaderPermute.hpp"
 
 namespace tge::shader {
 
@@ -342,27 +346,16 @@ __implGenerateIntermediate(const ShaderInfo &pair) noexcept {
   const auto langName = pair.language;
   const auto &additional = pair.additionalCode;
 
-  auto shader = std::make_unique<glslang::TShader>(langName);
-  std::vector<const char *> ptrData;
-  ptrData.reserve(additional.size());
-  for (const auto &rev : additional)
-    ptrData.push_back(rev.data());
-  ptrData.push_back(pair.code.data());
-
-  shader->setStrings(ptrData.data(), ptrData.size());
-  shader->setEnvInput(glslang::EShSourceGlsl, langName,
-                      glslang::EShClientVulkan, 100);
-  shader->setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
-  shader->setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
-
-  if (!shader->parse(&DefaultTBuiltInResource, 450, true,
-                     EShMessages::EShMsgVulkanRules)) {
-    printf("======== Shader compile error ==========\n\n%s\n",
-           shader->getInfoLog());
-    return std::nullptr_t();
+  std::string code(begin(pair.code), end(pair.code));
+  const nlohmann::json json = nlohmann::json::parse(code);
+  auto permute = permute::fromJson<permute::PermuteGLSL>(json);
+  if (!permute.generate(additional)) {
+    printf("Error while generating glsl!");
+    return std::unique_ptr<glslang::TShader>();
   }
-  return shader;
-}
+  return std::unique_ptr<glslang::TShader>(
+        (glslang::TShader *)permute.getCostumData());
+  }
 
 VulkanShaderPipe *
 __implLoadShaderPipeAndCompile(const std::vector<ShaderInfo> &vector) {

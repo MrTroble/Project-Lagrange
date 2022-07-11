@@ -282,6 +282,7 @@ struct GenerateOutput {
   std::string output;
   OutputType type = OutputType::ERROR;
   std::vector<unsigned int> data;
+  void *costumData = nullptr;
 };
 
 class PermuteText {
@@ -296,7 +297,7 @@ public:
           buffer << codePart << std::endl;
       }
     }
-    return {std::move(buffer.str()), OutputType::TEXT};
+    return {buffer.str(), OutputType::TEXT};
   }
 };
 
@@ -474,8 +475,7 @@ public:
   generate(const GenerateInput input) {
     auto generator = MaterialX::GlslShaderGenerator::create();
     auto doc = MaterialX::Document::createDocument();
-    generator->registerShaderMetadata()
-    auto shader = generator->generate("", );
+    generator->registerShaderMetadata() auto shader = generator->generate("", );
   }
 };
 #endif // SPR_NO_MATERIALX
@@ -492,18 +492,18 @@ public:
       postProcess(output.output, glslLookup);
       auto stringPtr = output.output.c_str();
       const GlslSettings settings = input.settings.get<GlslSettings>();
-      glslang::TShader shader(settings.shaderType);
-      shader.setStrings(&stringPtr, 1);
-      shader.setEnvInput(glslang::EShSourceGlsl, settings.shaderType,
-                         settings.targetClient, 100);
-      shader.setEnvClient(settings.targetClient, settings.targetVersion);
-      shader.setEnvTarget(settings.targetLanguage,
-                          settings.targetLanguageVersion);
-      if (!shader.parse(&defaultTBuiltInResource, 450, false,
-                        EShMessages::EShMsgVulkanRules)) {
-        return {shader.getInfoLog(), OutputType::ERROR};
+      auto shader = new glslang::TShader(settings.shaderType);
+      shader->setStrings(&stringPtr, 1);
+      shader->setEnvInput(glslang::EShSourceGlsl, settings.shaderType,
+                          settings.targetClient, 100);
+      shader->setEnvClient(settings.targetClient, settings.targetVersion);
+      shader->setEnvTarget(settings.targetLanguage,
+                           settings.targetLanguageVersion);
+      if (!shader->parse(&defaultTBuiltInResource, 450, false,
+                         EShMessages::EShMsgVulkanRules)) {
+        return {shader->getInfoLog(), OutputType::ERROR};
       }
-      const auto interm = shader.getIntermediate();
+      const auto interm = shader->getIntermediate();
       const auto node = interm->getTreeRoot();
       for (const auto travPtr : traverser) {
         if (!travPtr->isValid(settings))
@@ -515,7 +515,7 @@ public:
       std::vector<unsigned int> outputData;
       glslang::GlslangToSpv(*interm, outputData);
       return {std::move(output.output), OutputType::BINARY,
-              std::move(outputData)};
+              std::move(outputData), shader};
     } catch (const std::exception &) {
       return {"Could not parse glsl settings!", OutputType::ERROR};
     }
@@ -553,6 +553,8 @@ public:
   }
 
   SPR_NODISCARD inline nlohmann::json getSettings() const { return settings; }
+
+  SPR_NODISCARD inline void* getCostumData() const { return output.costumData; }
 
   template <class Settings> SPR_NODISCARD inline Settings getSettings() const {
     return settings.get<Settings>();
