@@ -12,8 +12,9 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 #undef ERROR
-
+#define SPR_NO_STATIC 1
 #define SPR_NO_GLSL_INCLUDE 1
+#define SPR_STATIC extern
 #include "../../../public/headerlibs/ShaderPermute.hpp"
 
 namespace tge::shader {
@@ -313,6 +314,9 @@ constexpr TBuiltInResource DefaultTBuiltInResource = {
         /* .generalConstantMatrixVectorIndexing = */ 1,
     }};
 
+permute::lookup glslLookup = {{"next", next}};
+std::map<std::string, int> lookupCounter;
+
 void __implCreateDescSets(VulkanShaderPipe *shaderPipe,
                           VulkanShaderModule *vsm) {
   graphics::VulkanGraphicsModule *vgm =
@@ -343,19 +347,23 @@ void __implCreateDescSets(VulkanShaderPipe *shaderPipe,
 
 std::unique_ptr<glslang::TShader>
 __implGenerateIntermediate(const ShaderInfo &pair) noexcept {
-  const auto langName = pair.language;
   const auto &additional = pair.additionalCode;
 
   std::string code(begin(pair.code), end(pair.code));
   const nlohmann::json json = nlohmann::json::parse(code);
   auto permute = permute::fromJson<permute::PermuteGLSL>(json);
+  for (const auto &string : additional) {
+    const auto splitOffset = string.find('_');
+    permute::glslLookup.insert_or_assign(string.substr(0, splitOffset),
+                                         [](auto in) { return splitOffset; });
+  }
   if (!permute.generate(additional)) {
     printf("Error while generating glsl!");
     return std::unique_ptr<glslang::TShader>();
   }
   return std::unique_ptr<glslang::TShader>(
-        (glslang::TShader *)permute.getCostumData());
-  }
+      (glslang::TShader *)permute.getCostumData());
+}
 
 VulkanShaderPipe *
 __implLoadShaderPipeAndCompile(const std::vector<ShaderInfo> &vector) {
@@ -390,7 +398,7 @@ ShaderPipe VulkanShaderModule::loadShaderPipeAndCompile(
   for (const auto &name : shadernames) {
     const std::string abrivation = name.substr(name.size() - 4);
     auto path = fs::path(name);
-    std::cout << path;
+    std::cout << path << std::endl;
     vector.push_back({getLang(abrivation), util::wholeFile(path)});
   }
   const auto loadedPipes = __implLoadShaderPipeAndCompile(vector);

@@ -21,8 +21,9 @@ int main() {
 
   auto api = getAPILayer();
   auto shader = api->getShaderAPI();
+  auto pipe =
+      shader->loadShaderPipeAndCompile({"assets/perInstanceVertexShader.vert", "assets/test.frag"});
   
-
   const auto startResult = start();
   if (startResult != Error::NONE) {
     printf("Error in start!");
