@@ -85,3 +85,8 @@ add_test(NAME TGEngineTest COMMAND TGEngineTest)
 add_executable(TGRenderTest "renderTest/TGRenderTest.cpp")
 target_include_directories(TGRenderTest PUBLIC "public")
 target_link_libraries(TGRenderTest PUBLIC TGEngine)
+
+
+add_executable(TGApp "application/TGApp.cpp")
+target_include_directories(TGApp PUBLIC "public")
+target_link_libraries(TGApp PUBLIC TGEngine)
