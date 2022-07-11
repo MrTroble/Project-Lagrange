@@ -1,6 +1,6 @@
 {
 	"settings": {
-		"shaderType": "fragment"
+		"shaderType": "vertex"
 	},
 	"codes": [
 		{

@@ -390,6 +390,7 @@ ShaderPipe VulkanShaderModule::loadShaderPipeAndCompile(
   for (const auto &name : shadernames) {
     const std::string abrivation = name.substr(name.size() - 4);
     auto path = fs::path(name);
+    std::cout << path;
     vector.push_back({getLang(abrivation), util::wholeFile(path)});
   }
   const auto loadedPipes = __implLoadShaderPipeAndCompile(vector);
