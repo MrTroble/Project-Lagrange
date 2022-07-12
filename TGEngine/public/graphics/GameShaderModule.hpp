@@ -70,7 +70,7 @@ struct ShaderCreateInfo {
 
 using ShaderPipe = void *;
 
-enum BindingType { UniformBuffer, Texture, Sampler, InputAttachment };
+enum BindingType { UniformBuffer, Texture, Sampler, InputAttachment, Storage };
 
 struct BufferBindingData {
   size_t dataID;

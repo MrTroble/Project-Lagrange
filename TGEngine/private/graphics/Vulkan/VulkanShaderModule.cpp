@@ -656,7 +656,7 @@ size_t VulkanShaderModule::createBindings(ShaderPipe pipe, const size_t count) {
   }
 
   std::vector<BindingInfo> bInfo;
-  if (defaultbindings.size() > layout) {
+  if (defaultbindings.size() > layout && shaderPipe->needsDefaultBindings) {
     auto &bindings = defaultbindings[layout];
     if (!bindings.empty()) {
       for (size_t i = 0; i < count; i++) {
@@ -702,13 +702,17 @@ void VulkanShaderModule::bindData(const BindingInfo *info, const size_t count) {
   for (size_t i = 0; i < count; i++) {
     const auto &cinfo = info[i];
     switch (cinfo.type) {
+    case BindingType::Storage:
     case BindingType::UniformBuffer: {
       const auto &buffI = cinfo.data.buffer;
       bufferInfo[i] = (DescriptorBufferInfo(vgm->bufferList[buffI.dataID],
                                             buffI.offset, buffI.size));
       set.push_back(WriteDescriptorSet(
           descSets[cinfo.bindingSet], cinfo.binding, 0, 1,
-          DescriptorType::eUniformBuffer, nullptr, bufferInfo.data() + i));
+                                       cinfo.type == BindingType::UniformBuffer
+                                           ? DescriptorType::eUniformBuffer
+                                           : DescriptorType::eStorageBuffer,
+                                       nullptr, bufferInfo.data() + i));
     } break;
     case BindingType::Texture:
     case BindingType::Sampler:

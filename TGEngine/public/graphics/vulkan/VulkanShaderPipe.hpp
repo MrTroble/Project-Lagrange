@@ -27,6 +27,7 @@ struct VulkanShaderPipe {
   PipelineRasterizationStateCreateInfo rasterization;
   std::vector<DescriptorSetLayoutBinding> descriptorLayoutBindings;
   size_t layoutID = UINT64_MAX;
+  bool needsDefaultBindings = true;
 };
 
 } // namespace tge::graphics

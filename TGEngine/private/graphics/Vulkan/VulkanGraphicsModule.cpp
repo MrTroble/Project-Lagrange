@@ -177,12 +177,14 @@ void VulkanGraphicsModule::pushRender(const size_t renderInfoCount,
       vertexBuffer.push_back(bufferList[vertId]);
     }
 
-    if (info.vertexOffsets.size() == 0) {
-      std::vector<size_t> offsets(vertexBuffer.size());
-      std::fill(offsets.begin(), offsets.end(), 0);
-      cmdBuf.bindVertexBuffers(0, vertexBuffer, offsets);
-    } else {
-      cmdBuf.bindVertexBuffers(0, vertexBuffer, info.vertexOffsets);
+    if (!vertexBuffer.empty()) {
+      if (info.vertexOffsets.size() == 0) {
+        std::vector<size_t> offsets(vertexBuffer.size());
+        std::fill(offsets.begin(), offsets.end(), 0);
+        cmdBuf.bindVertexBuffers(0, vertexBuffer, offsets);
+      } else {
+        cmdBuf.bindVertexBuffers(0, vertexBuffer, info.vertexOffsets);
+      }
     }
 
     if (info.bindingID != UINT64_MAX) {
@@ -200,7 +202,8 @@ void VulkanGraphicsModule::pushRender(const size_t renderInfoCount,
       cmdBuf.bindIndexBuffer(bufferList[info.indexBuffer], info.indexOffset,
                              (IndexType)info.indexSize);
 
-      cmdBuf.drawIndexed(info.indexCount, info.instanceCount, 0, 0, 0);
+      cmdBuf.drawIndexed(info.indexCount, info.instanceCount, 0, 0,
+                         info.firstInstance);
     } else {
       cmdBuf.draw(info.indexCount, info.instanceCount, 0, 0);
     }
@@ -235,6 +238,11 @@ inline BufferUsageFlags getUsageFlagsFromDataType(const DataType type) {
     return BufferUsageFlagBits::eVertexBuffer;
   case DataType::IndexData:
     return BufferUsageFlagBits::eIndexBuffer;
+  case DataType::All:
+    return BufferUsageFlagBits::eVertexBuffer |
+           BufferUsageFlagBits::eIndexBuffer |
+           BufferUsageFlagBits::eUniformBuffer |
+           BufferUsageFlagBits::eStorageBuffer;
   default:
     throw std::runtime_error("Couldn't find usage flag");
   }

@@ -5,8 +5,8 @@ struct Cell {
    vec3 point[8];
 };
 
-layout(binding=0) uniform CELL_UBO { 
-   Cell cells[147483648];
+layout(binding=0) buffer CELL_UBO { 
+   Cell cells[17483648];
 } cellUbo;
 layout(binding=1) uniform VIEW_UBO { 
    mat4 viewMatrix;
@@ -20,14 +20,12 @@ const int degreeY = $degree_Y ;
 const int stepsY = $steps_Y ;
 const int maxStepsY = degreeY * stepsY;
 
-layout(location=0) in int cellIndex;
-
 out gl_PerVertex {
    vec4 gl_Position;
 };
 
 void main() {
-   Cell cell = cellUbo.cells[cellIndex];
+   Cell cell = cellUbo.cells[gl_InstanceIndex];
    vec2 position = vec2(gl_VertexIndex % maxStepsX, floor(gl_VertexIndex / maxStepsX));
    gl_Position = vec4(position, 0, 0);
 }

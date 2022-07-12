@@ -26,6 +26,7 @@ struct RenderInfo {
   IndexSize indexSize = IndexSize::UINT32;
   std::vector<size_t> vertexOffsets;
   size_t bindingID = UINT64_MAX;
+  size_t firstInstance = 0;
 };
 
 struct TextureInfo {
@@ -66,7 +67,9 @@ struct Light {
       : pos(pos), color(color), intensity(intensity) {}
 };
 
-enum class DataType { IndexData, VertexData, VertexIndexData, Uniform };
+enum class DataType {
+  IndexData, VertexData, VertexIndexData, Uniform, All
+};
 
 class APILayer : public main::Module { // Interface
 protected:
