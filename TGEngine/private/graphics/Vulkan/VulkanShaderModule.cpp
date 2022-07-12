@@ -362,6 +362,8 @@ __implGenerateIntermediate(const ShaderInfo &pair) noexcept {
   const nlohmann::json json = nlohmann::json::parse(code);
   auto permute = permute::fromJson<permute::PermuteGLSL>(json);
   if (!permute.generate(additional)) {
+    for (auto &str : permute.getContent())
+      printf(str.c_str());
     printf("Error while generating glsl!");
     return std::unique_ptr<glslang::TShader>();
   }

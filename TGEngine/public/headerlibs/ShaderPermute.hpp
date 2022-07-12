@@ -279,7 +279,7 @@ struct GenerateInput {
 };
 
 struct GenerateOutput {
-  std::string output;
+  std::vector<std::string> output;
   OutputType type = OutputType::ERROR;
   std::vector<unsigned int> data;
   void *costumData = nullptr;
@@ -289,26 +289,27 @@ class PermuteText {
 public:
   SPR_NODISCARD inline static GenerateOutput
   generate(const GenerateInput input) {
-    std::stringstream buffer;
+    std::vector<std::string> buffer;
+    buffer.reserve(input.codes.size());
     for (const auto &code : input.codes) {
       if (isRequired(code.flags) || code.dependsOn.empty() ||
           isInDependency(input.dependencies, code.dependsOn)) {
         for (const auto &codePart : code.code)
-          buffer << codePart << std::endl;
+          buffer.push_back(codePart);
       }
     }
-    return {buffer.str(), OutputType::TEXT};
+    return {buffer, OutputType::TEXT};
   }
 };
 
-inline void postProcess(std::string &codePart, const lookup &callback) {
+inline std::string postProcess(std::string &codePart, const lookup &callback) {
   if (callback.empty())
-    return;
+    return codePart;
   auto eItr = end(codePart);
   auto startWordItr = eItr;
   auto paramStartItr = eItr;
   lookup::value_type::second_type func(nullptr);
-  for (auto itr = codePart.begin(); itr != eItr; itr++) {
+  for (auto itr = begin(codePart); itr != eItr; itr++) {
     if (*itr == '$') {
       startWordItr = itr + 1;
       continue;
@@ -333,6 +334,14 @@ inline void postProcess(std::string &codePart, const lookup &callback) {
       itr = begin(codePart) + distance;
       startWordItr = eItr;
     }
+  }
+  return codePart;
+}
+
+inline void postProcess(std::vector<std::string> &codePart,
+                        const lookup &callback) {
+  for (size_t i = 0; i < codePart.size(); i++) {
+    codePart[i] = postProcess(codePart[i], callback) + "\n";
   }
 }
 
@@ -386,7 +395,11 @@ SPR_STATIC std::string next(const std::string &input) {
 #endif
 }
 
-SPR_STATIC lookup glslLookup = {{"next", next}};
+SPR_STATIC lookup glslLookup
+#ifndef SPR_NO_STATIC
+    = {{"next", next}}
+#endif // SPR_STATIC
+;
 
 class ShaderTraverser;
 static std::vector<permute::ShaderTraverser *> traverser;
@@ -490,10 +503,20 @@ public:
       return output;
     try {
       postProcess(output.output, glslLookup);
-      auto stringPtr = output.output.c_str();
+      for (auto &str : output.output) {
+        printf(str.c_str());
+      }
+      auto stringPtr = output.output;
+      std::vector<const char *> cstrings;
+      cstrings.resize(stringPtr.size());
+#ifdef DEBUG
+      for (size_t i = 0; i < stringPtr.size(); i++) {
+        cstrings[i] = stringPtr[i].c_str();
+      }
+#endif
       const GlslSettings settings = input.settings.get<GlslSettings>();
       auto shader = new glslang::TShader(settings.shaderType);
-      shader->setStrings(&stringPtr, 1);
+      shader->setStrings(cstrings.data(), cstrings.size());
       shader->setEnvInput(glslang::EShSourceGlsl, settings.shaderType,
                           settings.targetClient, 100);
       shader->setEnvClient(settings.targetClient, settings.targetVersion);
@@ -501,7 +524,7 @@ public:
                            settings.targetLanguageVersion);
       if (!shader->parse(&defaultTBuiltInResource, 450, false,
                          EShMessages::EShMsgVulkanRules)) {
-        return {shader->getInfoLog(), OutputType::ERROR};
+        return {{shader->getInfoLog()}, OutputType::ERROR};
       }
       const auto interm = shader->getIntermediate();
       const auto node = interm->getTreeRoot();
@@ -516,8 +539,9 @@ public:
       glslang::GlslangToSpv(*interm, outputData);
       return {std::move(output.output), OutputType::BINARY,
               std::move(outputData), shader};
-    } catch (const std::exception &) {
-      return {"Could not parse glsl settings!", OutputType::ERROR};
+    } catch (const std::exception &e) {
+      return {{"Could not parse glsl settings!", std::string(e.what())},
+              OutputType::ERROR};
     }
     return {};
   }
@@ -544,7 +568,9 @@ public:
     return output.type != OutputType::ERROR;
   }
 
-  SPR_NODISCARD inline std::string getContent() const { return output.output; }
+  SPR_NODISCARD inline std::vector<std::string> getContent() const {
+    return output.output;
+  }
 
   SPR_NODISCARD inline std::vector<unsigned int> getBinary() const {
     if (output.type != OutputType::BINARY)
@@ -554,7 +580,7 @@ public:
 
   SPR_NODISCARD inline nlohmann::json getSettings() const { return settings; }
 
-  SPR_NODISCARD inline void* getCostumData() const { return output.costumData; }
+  SPR_NODISCARD inline void *getCostumData() const { return output.costumData; }
 
   template <class Settings> SPR_NODISCARD inline Settings getSettings() const {
     return settings.get<Settings>();
