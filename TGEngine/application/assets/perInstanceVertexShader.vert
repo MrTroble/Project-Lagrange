@@ -12,7 +12,7 @@
         "   vec3 point[8]; ",
         "}; ",
         " ",
-        "layout(binding=0) buffer CELL_UBO {  ",
+        "layout(std140,binding=0) readonly buffer CELL_UBO {  ",
         "   Cell cells[17483648]; ",
         "} cellUbo; ",
         "layout(binding=1) uniform VIEW_UBO {  ",

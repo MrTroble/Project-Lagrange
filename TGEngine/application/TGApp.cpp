@@ -155,6 +155,7 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     renderInfos[i].materialId = materialID + i;
     renderInfos[i].firstInstance = offset;
     renderInfos[i].instanceCount = sizePerDegree[i];
+    renderInfos[i].bindingID = shaderOffset + i;
     offset += renderInfos[i].instanceCount;
     actualInfos.push_back(renderInfos[i]);
   }
