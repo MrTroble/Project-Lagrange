@@ -26,7 +26,6 @@ out gl_PerVertex {
 
 void main() {
    Cell cell = cellUbo.cells[gl_InstanceIndex];
-   vec2 position = vec2(gl_VertexIndex % maxStepsX, floor(gl_VertexIndex / maxStepsX));
-   gl_Position = vec4(position, 0, 0);
+   gl_Position = vec4(cell.point[gl_VertexIndex], 0);
 }
  
