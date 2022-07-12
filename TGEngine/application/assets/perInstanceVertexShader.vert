@@ -27,7 +27,7 @@
         "const int stepsY = $steps_Y ;",
         "const int maxStepsY = degreeY * stepsY; ",
         " ",
-        "layout(location=1) in int cellIndex; ",
+        "layout(location=0) in int cellIndex; ",
         " ",
         "out gl_PerVertex { ",
         "   vec4 gl_Position; ",
