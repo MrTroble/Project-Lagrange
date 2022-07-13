@@ -30,9 +30,11 @@ permute::lookup glslLookup = {{"next", next}};
 constexpr auto MAX_DEGREE = 7;
 
 struct Cell {
+  glm::vec3 centerOfCell;
   glm::vec3 points[8];
 };
 
+size_t actualInUse = 0;
 std::array<Cell, 17483648> cells;
 
 inline std::tuple<uint32_t, uint32_t>
@@ -164,6 +166,46 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
   return bufferID;
 }
 
+void readData(std::string &&input) {
+  std::ifstream fstream(input);
+  char control;
+  std::stringstream stream;
+  std::vector<float> floating;
+  Cell cell;
+  uint32_t index = 0;
+  while (!fstream.eof()) {
+    char nextChar;
+    fstream >> nextChar;
+    if (nextChar == ';')
+      continue;
+    if (nextChar == ',') {
+      floating.push_back(std::atof(stream.str().c_str()));
+      stream.clear();
+    } else if (nextChar == '\n') {
+      switch (control) {
+      case 'M':
+        cell.centerOfCell = glm::vec3(floating[0], floating[1], floating[2]);
+        break;
+      case 'P':
+        cell.points[index] = glm::vec3(floating[0], floating[1], floating[2]);
+        index++;
+        break;
+      default:
+        break;
+      }
+      floating.clear();
+      control = '_';
+    } else if (control == '_') {
+      control = nextChar;
+      if (control == 'M')
+        cells[actualInUse++] = cell;
+    } else {
+      stream << nextChar;
+    }
+  }
+  cells[actualInUse++] = cell;
+}
+
 int main() {
   TGAppGUI *gui = new TGAppGUI;
   lateModules.push_back(gui);
@@ -179,9 +221,8 @@ int main() {
 
   std::array<uint32_t, MAX_DEGREE> sizePerDegree;
   std::fill(begin(sizePerDegree), end(sizePerDegree), 0);
-  sizePerDegree[0] = 1;
-
-  cells[0] = {glm::vec3(1, 0, 0)};
+  sizePerDegree[3] = 1;
+  readData("testInput.txt");
 
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =
