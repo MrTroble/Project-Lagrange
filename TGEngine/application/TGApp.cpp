@@ -32,6 +32,7 @@ constexpr auto MAX_DEGREE = 7;
 struct Cell {
   glm::vec3 centerOfCell;
   glm::vec3 points[8];
+  std::vector<glm::vec4> polynomials;
 };
 
 size_t actualInUse = 0;
@@ -173,6 +174,7 @@ void readData(std::string &&input) {
   std::vector<float> floating;
   Cell cell;
   uint32_t index = 0;
+  cell.polynomials.reserve(120);
   while (!fstream.eof()) {
     char nextChar;
     fstream >> nextChar;
@@ -190,6 +192,9 @@ void readData(std::string &&input) {
         cell.points[index] = glm::vec3(floating[0], floating[1], floating[2]);
         index++;
         break;
+      case 'V':
+        cell.polynomials.push_back(
+            glm::vec4(floating[0], floating[1], floating[2], floating[3]));
       default:
         break;
       }
