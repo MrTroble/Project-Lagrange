@@ -16,7 +16,9 @@
 #define SPR_STATIC extern
 #include <Util.hpp>
 #include <array>
+#include <cmath>
 #include <headerlibs/ShaderPermute.hpp>
+#include <limits>
 
 using namespace tge::main;
 using namespace tge::graphics;
@@ -36,7 +38,13 @@ struct Cell {
 };
 
 size_t actualInUse = 0;
-std::array<Cell, 17483648> cells;
+std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
+std::array<std::vector<float>, MAX_DEGREE> cellDataPerLayer;
+glm::mat4 mvpMatrix(1);
+constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,  4,  8, 12,
+                                                         16, 20, 24};
+
+float currentY = 0;
 
 inline std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
@@ -45,6 +53,14 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
   glslang::InitializeProcess();
   util::OnExit exitHandle(&glslang::FinalizeProcess);
   shader::VulkanShaderPipe shaderPipe{};
+
+  auto fragment = permute::fromFile<permute::PermuteGLSL>("assets/test.frag");
+  if (!fragment.generate()) {
+    for (auto &str : fragment.getContent())
+      printf(str.c_str());
+    return {-1, -1};
+  }
+
   auto perm = permute::fromFile<permute::PermuteGLSL>(
       "assets/perInstanceVertexShader.vert");
   std::array<Material, MAX_DEGREE> material;
@@ -54,6 +70,7 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
       return std::to_string(i);
     };
     permute::glslLookup["steps"] = permute::glslLookup["degree"];
+    permute::glslLookup["allpoints"] = [&](const auto &input) { return "4"; };
     if (!perm.generate({std::to_string(i)})) {
       for (auto &str : perm.getContent())
         printf(str.c_str());
@@ -62,6 +79,8 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     auto shaderpipe = new tge::shader::VulkanShaderPipe;
     shaderpipe->inputStateCreateInfo = vk::PipelineVertexInputStateCreateInfo();
 
+    shaderpipe->shader.push_back(
+        {fragment.getBinary(), vk::ShaderStageFlagBits::eFragment});
     shaderpipe->shader.push_back(
         {perm.getBinary(), vk::ShaderStageFlagBits::eVertex});
 
@@ -101,73 +120,59 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
 
 inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                              tge::shader::VulkanShaderModule *shader,
-                             uint32_t materialID, uint32_t shaderOffset,
-                             std::array<uint32_t, MAX_DEGREE> &sizePerDegree) {
-  std::array<std::vector<uint32_t>, MAX_DEGREE> indexBuffer;
-  std::array<RenderInfo, MAX_DEGREE> renderInfos;
-
+                             uint32_t materialID, uint32_t shaderOffset) {
+  std::vector<size_t> sizes = {sizeof(mvpMatrix)};
+  std::vector<void *> data = {&mvpMatrix};
+  std::vector<size_t> layer = {};
   for (size_t i = 0; i < MAX_DEGREE; i++) {
-    std::vector<uint32_t> indices;
-    if (i < 2) {
-      indices.resize(6);
-    } else {
-      indices.resize(i * i * i * i * 3 / 2);
-    }
-    for (size_t x = 0; x < indices.size() / 6; x++) {
-      indices[x] = x;
-      indices[x + 1] = x + 1;
-      indices[x + 2] = x + 2;
-      indices[x + 3] = x;
-      indices[x + 4] = x + 2;
-      indices[x + 5] = x + 3;
-    }
-    indexBuffer[i] = indices;
-    renderInfos[i].indexCount = indices.size();
-  }
-
-  std::vector<size_t> sizes = {cells.size() * sizeof(Cell)};
-  std::vector<void *> data = {cells.data()};
-  sizes.reserve(MAX_DEGREE + 1);
-  data.reserve(MAX_DEGREE + 1);
-  for (const auto &buffer : indexBuffer) {
-    sizes.push_back(buffer.size() * sizeof(uint32_t));
-    data.push_back((void *)buffer.data());
+    if (cellDataPerLayer[i].empty())
+      continue;
+    layer.push_back(i);
+    sizes.push_back(cellDataPerLayer[i].size());
+    data.push_back(cellDataPerLayer[i].data());
   }
 
   const auto bufferID =
       api->pushData(data.size(), data.data(), sizes.data(), DataType::All);
 
-  size_t offset = 0;
-
   std::vector<RenderInfo> actualInfos;
   std::vector<shader::BindingInfo> infos;
   actualInfos.reserve(MAX_DEGREE);
-  for (size_t i = 0; i < MAX_DEGREE; i++) {
+  infos.reserve(MAX_DEGREE * 2);
+  for (size_t i = 0; i < layer.size(); i++) {
+    const size_t cLayer = layer[i];
+
     shader::BindingInfo info;
     info.binding = 0;
     info.bindingSet = shader->pipeInfos[shaderOffset + i].descSet;
     info.type = shader::BindingType::Storage;
-    info.data.buffer.dataID = bufferID;
+    info.data.buffer.dataID = bufferID + i + 1;
     info.data.buffer.offset = 0;
-    info.data.buffer.size = sizes[0];
+    info.data.buffer.size = sizes[i + 1];
     infos.push_back(info);
 
-    if (sizePerDegree[i] < 1)
-      continue;
-    renderInfos[i].indexBuffer = bufferID + i + 1;
-    renderInfos[i].materialId = materialID + i;
-    renderInfos[i].firstInstance = offset;
-    renderInfos[i].instanceCount = sizePerDegree[i];
-    renderInfos[i].bindingID = shaderOffset + i;
-    offset += renderInfos[i].instanceCount;
-    actualInfos.push_back(renderInfos[i]);
+    info.binding = 1;
+    info.type = shader::BindingType::UniformBuffer;
+    info.data.buffer.dataID = bufferID;
+    info.data.buffer.size = sizes[i];
+    infos.push_back(info);
+
+    RenderInfo renderInfo;
+    renderInfo.indexSize = IndexSize::NONE;
+    renderInfo.materialId = materialID + i;
+    renderInfo.firstInstance = 0;
+    renderInfo.indexCount = indexCount[cLayer];
+    renderInfo.instanceCount =
+        cellDataPerLayer[cLayer].size() / renderInfo.indexCount;
+    renderInfo.bindingID = shaderOffset + i;
+    actualInfos.push_back(renderInfo);
   }
   shader->bindData(infos.data(), infos.size());
   api->pushRender(actualInfos.size(), actualInfos.data());
   return bufferID;
 }
 
-void readData(std::string &&input) {
+inline void readData(std::string &&input) {
   std::ifstream fstream(input);
   char control;
   std::stringstream stream;
@@ -202,13 +207,40 @@ void readData(std::string &&input) {
       control = '_';
     } else if (control == '_') {
       control = nextChar;
-      if (control == 'M')
-        cells[actualInUse++] = cell;
+      if (control == 'M') {
+        const uint32_t degree = std::pow(cell.polynomials.size(), 1 / 3);
+        cellsPerLayer[degree].push_back(cell);
+        cell = {};
+      }
     } else {
       stream << nextChar;
     }
   }
-  cells[actualInUse++] = cell;
+  const uint32_t degree = std::pow(cell.polynomials.size(), 1 / 3);
+  cellsPerLayer[degree].push_back(cell);
+}
+
+#undef min
+#undef max
+
+inline void makeData() {
+  std::numeric_limits<float> flim;
+  for (size_t i = 0; i < indexCount.size(); i++) {
+    const auto &cLayer = cellsPerLayer[i];
+    for (const auto &cell : cLayer) {
+      float ymax = flim.max();
+      float ymin = flim.min();
+      for (size_t z = 0; z < 8; z++) {
+        ymax = std::max(ymax, cell.points[z].y);
+        ymin = std::min(ymin, cell.points[z].y);
+      }
+      if (!(ymax >= currentY && currentY >= ymin))
+        continue;
+      for (size_t x = 0; x < indexCount[i]; x++) {
+
+      }
+    }
+  }
 }
 
 int main() {
@@ -224,14 +256,12 @@ int main() {
   auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
 
-  std::array<uint32_t, MAX_DEGREE> sizePerDegree;
-  std::fill(begin(sizePerDegree), end(sizePerDegree), 0);
-  sizePerDegree[3] = 1;
   readData("testInput.txt");
+  makeData();
 
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =
-      createBuffer(api, shader, materialPoolID, shaderOffset, sizePerDegree);
+      createBuffer(api, shader, materialPoolID, shaderOffset);
 
   const auto startResult = start();
   if (startResult != main::Error::NONE) {

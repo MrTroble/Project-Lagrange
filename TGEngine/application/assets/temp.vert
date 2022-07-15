@@ -1,16 +1,12 @@
 #version 450
 #extension GL_KHR_vulkan_glsl: enable
 
-const int maxStepsX = $stepsX ;
-const int maxStepsY = $stepsY ;
-
-struct Cell {
-   vec3 centerOfCell;
-   float height[maxIndex];
-};
+const int maxStepsX = $steps_X ;
+const int maxStepsY = $steps_Y ;
+const int maxPoints = $allpoints_n ;
 
 layout(std140,binding=0) readonly buffer CELL_UBO { 
-   Cell cells[17483648];
+   vec4 cells[maxPoints];
 } cellUbo;
 layout(binding=1) uniform VIEW_UBO { 
    mat4 viewMatrix;
@@ -21,8 +17,7 @@ out gl_PerVertex {
 };
 
 void main() {
-   const Cell cell = cellUbo.cells[gl_InstanceIndex];
-   vec2 position = vec2(gl_VertexIndex % maxStepsX, floor(gl_VertexIndex / maxStepsX));
-   gl_Position = vec4(position, cell.point[gl_VertexIndex], 0);
+   const int bufferIndex = gl_InstanceIndex * 4 + gl_VertexIndex;
+   gl_Position = viewUbo.viewMatrix * cellUbo.cells[bufferIndex];
 }
  
