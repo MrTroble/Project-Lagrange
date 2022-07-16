@@ -1,19 +1,19 @@
 #include "../../public/graphics/GUIModule.hpp"
 #include "../../public/graphics/WindowModule.hpp"
 
+#include "../../public/TGEngine.hpp"
 #include "../../public/graphics/vulkan/VulkanModuleDef.hpp"
 #include <Windows.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <backends/imgui_impl_win32.cpp>
 #include <backends/imgui_impl_win32.h>
 #include <imgui.h>
-#include "../../public/TGEngine.hpp"
 
 namespace tge::gui {
 
 using namespace vk;
 
-inline void render(gui::GUIModule* gmod) {
+inline void render(gui::GUIModule *gmod) {
   const CommandBuffer buffer = (VkCommandBuffer)gmod->buffer;
   const RenderPass pass = (VkRenderPass)gmod->renderpass;
   auto vgm = (graphics::VulkanGraphicsModule *)main::getAPILayer();
@@ -62,18 +62,17 @@ main::Error GUIModule::init() {
 
   const auto vmod = (graphics::VulkanGraphicsModule *)api;
 
-  const std::array attachments = {
-      AttachmentDescription(
-          {}, vmod->format.format, SampleCountFlagBits::e1,
-          AttachmentLoadOp::eLoad, AttachmentStoreOp::eStore,
-          AttachmentLoadOp::eDontCare, AttachmentStoreOp::eDontCare,
-          ImageLayout::eUndefined, ImageLayout::ePresentSrcKHR)};
+  const std::array attachments = {AttachmentDescription(
+      {}, vmod->format.format, SampleCountFlagBits::e1, AttachmentLoadOp::eLoad,
+      AttachmentStoreOp::eStore, AttachmentLoadOp::eDontCare,
+      AttachmentStoreOp::eDontCare, ImageLayout::ePresentSrcKHR,
+      ImageLayout::ePresentSrcKHR)};
 
   constexpr std::array colorAttachments = {
       AttachmentReference(0, ImageLayout::eColorAttachmentOptimal)};
 
-  const std::array subpassDescriptions = {
-      SubpassDescription({}, PipelineBindPoint::eGraphics, {}, colorAttachments)};
+  const std::array subpassDescriptions = {SubpassDescription(
+      {}, PipelineBindPoint::eGraphics, {}, colorAttachments)};
 
   const std::array subpassDependencies = {
       SubpassDependency(VK_SUBPASS_EXTERNAL, 0,
@@ -167,9 +166,7 @@ main::Error GUIModule::init() {
   return main::Error::NONE;
 }
 
-void GUIModule::tick(double deltatime) {
-  render(this);
-}
+void GUIModule::tick(double deltatime) { render(this); }
 
 void GUIModule::destroy() {
   const auto vmod = (graphics::VulkanGraphicsModule *)main::getAPILayer();

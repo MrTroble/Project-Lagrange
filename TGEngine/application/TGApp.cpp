@@ -227,7 +227,8 @@ inline void readData(std::string &&input) {
       stream << nextChar;
     }
   }
-  const uint32_t degree = std::floor(std::pow(cell.polynomials.size(), 1 / 3.0f));
+  const uint32_t degree =
+      std::floor(std::pow(cell.polynomials.size(), 1 / 3.0f));
   cellsPerLayer[degree].push_back(cell);
 }
 
@@ -274,7 +275,14 @@ inline void makeData() {
 }
 
 int main() {
-  mvpMatrix = glm::perspective(glm::radians(75.0f), 1.0f, 0.0001f, 10000.0f);
+  auto projectionMatrix =
+      glm::perspective(glm::radians(75.0f), 1.0f, 0.0001f, 10000.0f);
+  projectionMatrix[1][1] *= -1;
+
+  mvpMatrix = projectionMatrix *
+              glm::lookAt(glm::vec3(0, 0.5f, 1), glm::vec3(0, 0, 0),
+                          glm::vec3(0, 1, 0)) *
+              glm::mat4(1);
   lateModules.push_back(guiModul);
 
   const auto initResult = init();
