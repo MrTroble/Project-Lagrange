@@ -39,12 +39,12 @@ struct Cell {
 
 size_t actualInUse = 0;
 std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
-std::array<std::vector<float>, MAX_DEGREE> cellDataPerLayer;
+std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 glm::mat4 mvpMatrix(1);
+TGAppGUI *guiModul = new TGAppGUI;
+
 constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,  4,  8, 12,
                                                          16, 20, 24};
-
-float currentY = 0;
 
 inline std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
@@ -70,7 +70,9 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
       return std::to_string(i);
     };
     permute::glslLookup["steps"] = permute::glslLookup["degree"];
-    permute::glslLookup["allpoints"] = [&](const auto &input) { return "4"; };
+    permute::glslLookup["allpoints"] = [&](const auto &input) {
+      return std::to_string(cellDataPerLayer[i].size());
+    };
     if (!perm.generate({std::to_string(i)})) {
       for (auto &str : perm.getContent())
         printf(str.c_str());
@@ -128,7 +130,8 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     if (cellDataPerLayer[i].empty())
       continue;
     layer.push_back(i);
-    sizes.push_back(cellDataPerLayer[i].size());
+    sizes.push_back(cellDataPerLayer[i].size() *
+                    sizeof(cellDataPerLayer[i][0]));
     data.push_back(cellDataPerLayer[i].data());
   }
 
@@ -173,38 +176,44 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
 }
 
 inline void readData(std::string &&input) {
-  std::ifstream fstream(input);
-  char control;
+  std::ifstream fstream(input, std::ios_base::binary);
+  char control = 'M';
   std::stringstream stream;
   std::vector<float> floating;
   Cell cell;
   uint32_t index = 0;
   cell.polynomials.reserve(120);
   while (!fstream.eof()) {
-    char nextChar;
-    fstream >> nextChar;
-    if (nextChar == ';')
+    char nextChar = fstream.get();
+    if (nextChar == '\r')
       continue;
-    if (nextChar == ',') {
-      floating.push_back(std::atof(stream.str().c_str()));
-      stream.clear();
-    } else if (nextChar == '\n') {
-      switch (control) {
-      case 'M':
-        cell.centerOfCell = glm::vec3(floating[0], floating[1], floating[2]);
-        break;
-      case 'P':
-        cell.points[index] = glm::vec3(floating[0], floating[1], floating[2]);
-        index++;
-        break;
-      case 'V':
-        cell.polynomials.push_back(
-            glm::vec4(floating[0], floating[1], floating[2], floating[3]));
-      default:
-        break;
+    if (nextChar == ';') {
+      stream = {};
+      continue;
+    }
+    if (nextChar == ',' || nextChar == '\n') {
+      const auto string = stream.str();
+      floating.push_back(std::stof(string));
+      stream = {};
+      if (nextChar == '\n') {
+        switch (control) {
+        case 'M':
+          cell.centerOfCell = glm::vec3(floating[0], floating[1], floating[2]);
+          break;
+        case 'P':
+          cell.points[index] = glm::vec3(floating[0], floating[1], floating[2]);
+          index++;
+          break;
+        case 'V':
+          cell.polynomials.push_back(
+              glm::vec4(floating[0], floating[1], floating[2], floating[3]));
+        default:
+          break;
+        }
+        floating.clear();
+        stream = {};
+        control = '_';
       }
-      floating.clear();
-      control = '_';
     } else if (control == '_') {
       control = nextChar;
       if (control == 'M') {
@@ -225,27 +234,48 @@ inline void readData(std::string &&input) {
 
 inline void makeData() {
   std::numeric_limits<float> flim;
+  float currentY = guiModul->currentY;
   for (size_t i = 0; i < indexCount.size(); i++) {
     const auto &cLayer = cellsPerLayer[i];
     for (const auto &cell : cLayer) {
-      float ymax = flim.max();
-      float ymin = flim.min();
+      glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
+      glm::vec3 minVec(flim.max(), flim.max(), flim.max());
       for (size_t z = 0; z < 8; z++) {
-        ymax = std::max(ymax, cell.points[z].y);
-        ymin = std::min(ymin, cell.points[z].y);
+        for (size_t id = 0; id < 3; id++) {
+          const auto current = cell.points[z][id];
+          maxVec[id] = std::max(maxVec[id], current);
+          minVec[id] = std::min(minVec[id], current);
+        }
       }
-      if (!(ymax >= currentY && currentY >= ymin))
+      if (!(maxVec.y >= currentY && currentY >= minVec.y))
         continue;
-      for (size_t x = 0; x < indexCount[i]; x++) {
-
+      const auto maxSize = indexCount[i];
+      auto &data = cellDataPerLayer[i];
+      const auto start = data.size();
+      data.resize(start + maxSize);
+      if (maxSize == 4) {
+        data[start + 0] = glm::vec4(minVec.x, minVec.y, 0, 1);
+        data[start + 1] = glm::vec4(maxVec.x, minVec.y, 0, 1);
+        data[start + 2] = glm::vec4(maxVec.x, maxVec.y, 0, 1);
+        data[start + 3] = glm::vec4(minVec.x, maxVec.y, 0, 1);
+      } else {
+        const double side = std::sqrt(maxSize);
+        const glm::vec2 difference = glm::vec2(maxVec - minVec);
+        for (size_t x = 0; x < maxSize; x++) {
+          const double xInterpolation = (x % (int)side) / side;
+          const double yInterpolation = std::floor(x / side);
+          const auto position =
+              difference * glm::vec2(xInterpolation, yInterpolation) +
+              glm::vec2(minVec);
+          data[start + x] = glm::vec4(position, 0, 1);
+        }
       }
     }
   }
 }
 
 int main() {
-  TGAppGUI *gui = new TGAppGUI;
-  lateModules.push_back(gui);
+  lateModules.push_back(guiModul);
 
   const auto initResult = init();
   if (initResult != main::Error::NONE) {
