@@ -30,5 +30,6 @@ struct Material {
   } data;
   void *costumShaderData = nullptr; // API dependent
   bool doubleSided = false;
+  uint32_t primitiveType = UINT32_MAX;
 };
 } // namespace tge::graphics

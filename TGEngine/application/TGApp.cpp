@@ -114,6 +114,7 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     shader->pipeLayouts.push_back(pipeLayout);
     shaderpipe->layoutID = shader->pipeLayouts.size() - 1;
     material[i].costumShaderData = shaderpipe;
+    material[i].primitiveType = (uint32_t)PrimitiveTopology::eTriangleFan;
     shaderpipe->needsDefaultBindings = false;
     shader->createBindings(shaderpipe, 1);
   }

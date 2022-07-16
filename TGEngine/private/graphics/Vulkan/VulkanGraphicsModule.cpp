@@ -58,10 +58,6 @@ inline void waitForImageTransition(
                             {}, {}, imageMemoryBarrier);
 }
 
-constexpr PipelineInputAssemblyStateCreateInfo
-    inputAssemblyCreateInfo({}, PrimitiveTopology::eTriangleList,
-                            false); // For now constexpr
-
 #define EXPECT(assertion)                                                      \
   if (!this->isInitialiazed || !(assertion)) {                                 \
     throw std::runtime_error(std::string("Debug assertion failed! ") +         \
@@ -133,6 +129,13 @@ size_t VulkanGraphicsModule::pushMaterials(const size_t materialcount,
     shaderPipe->rasterization.cullMode = material.doubleSided
                                              ? CullModeFlagBits::eNone
                                              : CullModeFlagBits::eFront;
+
+    const PipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo(
+        {},
+        material.primitiveType == UINT32_MAX
+            ? PrimitiveTopology::eTriangleList
+            : (PrimitiveTopology)(material.primitiveType),
+        false);
 
     GraphicsPipelineCreateInfo gpipeCreateInfo(
         {}, shaderPipe->pipelineShaderStage, &shaderPipe->inputStateCreateInfo,
@@ -630,6 +633,9 @@ inline void createLightPass(VulkanGraphicsModule *vgm) {
 
   const PipelineColorBlendStateCreateInfo colorBlendState(
       {}, false, LogicOp::eOr, blendAttachment);
+
+  const PipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo(
+      {}, PrimitiveTopology::eTriangleList, false);
 
   GraphicsPipelineCreateInfo graphicsPipeline(
       {}, pipe->pipelineShaderStage, &visci, &inputAssemblyCreateInfo, {},
