@@ -19,6 +19,8 @@
 #include <cmath>
 #include <headerlibs/ShaderPermute.hpp>
 #include <limits>
+#undef min
+#undef max
 
 using namespace tge::main;
 using namespace tge::graphics;
@@ -71,7 +73,7 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     };
     permute::glslLookup["steps"] = permute::glslLookup["degree"];
     permute::glslLookup["allpoints"] = [&](const auto &input) {
-      return std::to_string(cellDataPerLayer[i].size());
+      return std::to_string(std::max(cellDataPerLayer[i].size(), (size_t)1));
     };
     if (!perm.generate({std::to_string(i)})) {
       for (auto &str : perm.getContent())
@@ -225,12 +227,9 @@ inline void readData(std::string &&input) {
       stream << nextChar;
     }
   }
-  const uint32_t degree = std::pow(cell.polynomials.size(), 1 / 3);
+  const uint32_t degree = std::floor(std::pow(cell.polynomials.size(), 1 / 3.0f));
   cellsPerLayer[degree].push_back(cell);
 }
-
-#undef min
-#undef max
 
 inline void makeData() {
   std::numeric_limits<float> flim;
@@ -275,6 +274,7 @@ inline void makeData() {
 }
 
 int main() {
+  mvpMatrix = glm::perspective(glm::radians(75.0f), 1.0f, 0.0001f, 10000.0f);
   lateModules.push_back(guiModul);
 
   const auto initResult = init();
