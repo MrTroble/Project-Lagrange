@@ -4,6 +4,8 @@
 
 namespace tge::io {
 
+	constexpr auto SCROLL = 0xFFFFFFF - 2;
+
 struct KeyboardEvent {
   unsigned int signal;
 };

@@ -19,6 +19,7 @@
 #include <cmath>
 #include <headerlibs/ShaderPermute.hpp>
 #include <limits>
+#include "TGAppIO.hpp"
 #undef min
 #undef max
 
@@ -44,6 +45,7 @@ std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
 std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 glm::mat4 mvpMatrix(1);
 TGAppGUI *guiModul = new TGAppGUI;
+TGAppGUI *ioModul = new TGAppGUI;
 
 constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,  4,  8, 12,
                                                          16, 20, 24};
@@ -167,7 +169,7 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     renderInfo.indexSize = IndexSize::NONE;
     renderInfo.materialId = materialID + i;
     renderInfo.firstInstance = 0;
-    renderInfo.indexCount = indexCount[cLayer];
+    renderInfo.indexCount = 4;
     renderInfo.instanceCount =
         cellDataPerLayer[cLayer].size() / renderInfo.indexCount;
     renderInfo.bindingID = shaderOffset + i;
@@ -229,7 +231,7 @@ inline void readData(std::string &&input) {
     }
   }
   const uint32_t degree =
-      std::floor(std::pow(cell.polynomials.size(), 1 / 3.0f));
+      std::round(std::pow(cell.polynomials.size(), 1 / 3.0f));
   cellsPerLayer[degree].push_back(cell);
 }
 
@@ -276,14 +278,6 @@ inline void makeData() {
 }
 
 int main() {
-  auto projectionMatrix =
-      glm::perspective(glm::radians(75.0f), 1.0f, 0.0001f, 10000.0f);
-  projectionMatrix[1][1] *= -1;
-
-  mvpMatrix = projectionMatrix *
-              glm::lookAt(glm::vec3(0, 0.5f, 1), glm::vec3(0, 0, 0),
-                          glm::vec3(0, 1, 0)) *
-              glm::mat4(1);
   lateModules.push_back(guiModul);
 
   const auto initResult = init();
@@ -301,6 +295,12 @@ int main() {
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =
       createBuffer(api, shader, materialPoolID, shaderOffset);
+
+  Light light;
+  light.color = glm::vec3(1, 1, 1);
+  light.pos = glm::vec3(0, 100, 0);
+  light.intensity = 100.0f;
+  api->pushLights(1, &light);
 
   const auto startResult = start();
   if (startResult != main::Error::NONE) {

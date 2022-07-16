@@ -15,7 +15,12 @@ LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
     const auto xParam = GET_X_LPARAM(lParam);
     const auto yParam = GET_Y_LPARAM(lParam);
     for (const auto io : ios)
-      io->mouseEvent({xParam, yParam, 0});
+      io->mouseEvent({xParam, yParam, (int)wParam});
+  } break;
+  case WM_MOUSEHWHEEL: {
+    const auto zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+    for (const auto io : ios)
+      io->mouseEvent({zDelta, zDelta, SCROLL});
   } break;
   case WM_KEYDOWN: {
     for (const auto io : ios)
