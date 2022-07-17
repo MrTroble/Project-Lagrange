@@ -14,12 +14,12 @@
 #define SPR_NO_GLSL_INCLUDE 1
 #define SPR_NO_STATIC 1
 #define SPR_STATIC extern
+#include "TGAppIO.hpp"
 #include <Util.hpp>
 #include <array>
 #include <cmath>
 #include <headerlibs/ShaderPermute.hpp>
 #include <limits>
-#include "TGAppIO.hpp"
 #undef min
 #undef max
 
@@ -47,8 +47,8 @@ glm::mat4 mvpMatrix(1);
 TGAppGUI *guiModul = new TGAppGUI;
 TGAppGUI *ioModul = new TGAppGUI;
 
-constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,  4,  8, 12,
-                                                         16, 20, 24};
+constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,   4,   8,  144,
+                                                         256, 400, 576};
 
 inline std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
@@ -263,14 +263,20 @@ inline void makeData() {
         data[start + 3] = glm::vec4(minVec.x, maxVec.y, 0, 1);
       } else {
         const double side = std::sqrt(maxSize);
-        const glm::vec2 difference = glm::vec2(maxVec - minVec);
-        for (size_t x = 0; x < maxSize; x++) {
-          const double xInterpolation = (x % (int)side) / side;
+        const glm::vec2 difference =
+            glm::vec2(maxVec - minVec) / glm::vec2(side);
+        for (size_t x = 0; x < maxSize / 4; x++) {
+          const double xInterpolation = (x % (int)side);
           const double yInterpolation = std::floor(x / side);
           const auto position =
               difference * glm::vec2(xInterpolation, yInterpolation) +
               glm::vec2(minVec);
-          data[start + x] = glm::vec4(position, 0, 1);
+          data[start + x * 4 + 3] =
+              glm::vec4(position.x, position.y + difference.y, 0, 1);
+          data[start + x * 4 + 2] = glm::vec4(position + difference, 0, 1);
+          data[start + x * 4 + 1] =
+              glm::vec4(position.x + difference.x, position.y, 0, 1);
+          data[start + x * 4 + 0] = glm::vec4(position, 0, 1);
         }
       }
     }
