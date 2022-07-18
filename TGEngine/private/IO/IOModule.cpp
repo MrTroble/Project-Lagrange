@@ -17,6 +17,7 @@ LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
     for (const auto io : ios)
       io->mouseEvent({xParam, yParam, (int)wParam});
   } break;
+  case WM_MOUSEWHEEL:
   case WM_MOUSEHWHEEL: {
     const auto zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
     for (const auto io : ios)

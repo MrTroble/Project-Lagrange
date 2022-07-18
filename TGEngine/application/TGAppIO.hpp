@@ -8,7 +8,7 @@ class TGAppIO : public tge::io::IOModule {
 public:
   glm::vec3 translation = glm::vec3(0, 0, 0);
   glm::vec3 scale = glm::vec3(1, 1, 1);
-  glm::quat rotation = glm::quat();
+  glm::vec3 rotation = glm::vec3();
   glm::mat4 mvpMatrix = glm::mat4(1);
   glm::mat4 view = glm::mat4(1);
   glm::mat4 projectionMatrix =
@@ -24,7 +24,7 @@ public:
   void calculateMatrix() {
     mvpMatrix = projectionMatrix * view *
                 (glm::translate(translation) * glm::scale(scale) *
-                 glm::toMat4(rotation));
+                 glm::mat4(1));
   }
 
   void sendChanges() {
@@ -32,15 +32,23 @@ public:
                           sizeof(this->mvpMatrix));
   }
 
-  void tick(double deltatime) override { 
+  void tick(double deltatime) override {
     calculateMatrix();
     sendChanges();
   }
 
   void mouseEvent(const tge::io::MouseEvent event) override {
-    if (event.pressed & 1) {
-      view = glm::lookAt(glm::vec3(0, 0, -1), glm::vec3(0, 0, 0),
+    if ((event.pressed & 1) == 1) {
+      rotation += glm::vec3(event.x, 0, event.y) * glm::vec3(0.001f, 0, 0.001f);
+      view = glm::lookAt(rotation, glm::vec3(0, 0, 0),
                          glm::vec3(0, 1, 0));
+    }
+    if (event.pressed == tge::io::SCROLL) {
+      constexpr float WEIGHT = 0.0002f;
+      scale += event.x * WEIGHT;
+      if (scale.x < 0) {
+        scale = glm::vec3(0.01f, 0.01f, 0.01f);
+      }
     }
   }
 
