@@ -43,9 +43,8 @@ struct Cell {
 size_t actualInUse = 0;
 std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
 std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
-glm::mat4 mvpMatrix(1);
 TGAppGUI *guiModul = new TGAppGUI;
-TGAppGUI *ioModul = new TGAppGUI;
+TGAppIO *ioModul = new TGAppIO;
 
 constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,   4,   8,  144,
                                                          256, 400, 576};
@@ -128,8 +127,8 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
 inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                              tge::shader::VulkanShaderModule *shader,
                              uint32_t materialID, uint32_t shaderOffset) {
-  std::vector<size_t> sizes = {sizeof(mvpMatrix)};
-  std::vector<void *> data = {&mvpMatrix};
+  std::vector<size_t> sizes = {sizeof(ioModul->mvpMatrix)};
+  std::vector<void *> data = {&ioModul->mvpMatrix};
   std::vector<size_t> layer = {};
   for (size_t i = 0; i < MAX_DEGREE; i++) {
     if (cellDataPerLayer[i].empty())
@@ -170,8 +169,7 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     renderInfo.materialId = materialID + i;
     renderInfo.firstInstance = 0;
     renderInfo.indexCount = 4;
-    renderInfo.instanceCount =
-        cellDataPerLayer[cLayer].size() / renderInfo.indexCount;
+    renderInfo.instanceCount = cellDataPerLayer[cLayer].size() / 4;
     renderInfo.bindingID = shaderOffset + i;
     actualInfos.push_back(renderInfo);
   }
@@ -255,7 +253,7 @@ inline void makeData() {
       const auto maxSize = indexCount[i];
       auto &data = cellDataPerLayer[i];
       const auto start = data.size();
-      data.resize(start + maxSize);
+      data.resize(start + maxSize*4);
       if (maxSize == 4) {
         data[start + 0] = glm::vec4(minVec.x, minVec.y, 0, 1);
         data[start + 1] = glm::vec4(maxVec.x, minVec.y, 0, 1);
@@ -265,7 +263,7 @@ inline void makeData() {
         const double side = std::sqrt(maxSize);
         const glm::vec2 difference =
             glm::vec2(maxVec - minVec) / glm::vec2(side);
-        for (size_t x = 0; x < maxSize / 4; x++) {
+        for (size_t x = 0; x < maxSize; x++) {
           const double xInterpolation = (x % (int)side);
           const double yInterpolation = std::floor(x / side);
           const auto position =
@@ -285,6 +283,7 @@ inline void makeData() {
 
 int main() {
   lateModules.push_back(guiModul);
+  lateModules.push_back(ioModul);
 
   const auto initResult = init();
   if (initResult != main::Error::NONE) {
@@ -294,6 +293,7 @@ int main() {
 
   auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
+  ioModul->api = api;
 
   readData("testInput.txt");
   makeData();
@@ -301,6 +301,8 @@ int main() {
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =
       createBuffer(api, shader, materialPoolID, shaderOffset);
+  ioModul->binding = bufferPoolID;
+  ioModul->sendChanges();
 
   Light light;
   light.color = glm::vec3(1, 1, 1);

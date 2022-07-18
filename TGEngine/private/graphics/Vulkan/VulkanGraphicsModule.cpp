@@ -343,7 +343,8 @@ void VulkanGraphicsModule::changeData(const size_t bufferIndex,
   device.bindBufferMemory(intermBuffer, hostVisibleMemory, 0);
   const auto mappedHandle =
       device.mapMemory(hostVisibleMemory, 0, VK_WHOLE_SIZE);
-
+  glm::mat4 mat = *(glm::mat4*)data;
+  
   memcpy(mappedHandle, data, dataSizes);
 
   device.unmapMemory(hostVisibleMemory);
