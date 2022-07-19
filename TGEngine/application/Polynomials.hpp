@@ -1,8 +1,7 @@
-#ifndef POLYNOMIALS_HPP
-#define POLYNOMIALS_HPP
+#pragma once
 
-#include "Assertion.hpp"
-
+#include <stdexcept>
+#define THROW(x) throw std::runtime_error(x);
 
 template<typename T = double>
 class P0 {
@@ -785,5 +784,3 @@ public:
     THROW("Not implemented!")
   }
 };
-
-#endif //POLYNOMIALS_HPP

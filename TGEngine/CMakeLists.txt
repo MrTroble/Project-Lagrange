@@ -87,6 +87,6 @@ target_include_directories(TGRenderTest PUBLIC "public")
 target_link_libraries(TGRenderTest PUBLIC TGEngine)
 
 
-add_executable(TGApp "application/TGApp.cpp")
+add_executable(TGApp "application/TGApp.cpp" "application/Calculations.cpp")
 target_include_directories(TGApp PUBLIC "public")
 target_link_libraries(TGApp PUBLIC TGEngine)

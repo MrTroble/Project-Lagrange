@@ -23,6 +23,7 @@
 #include <limits>
 #include <regex>
 #include <string>
+#include "Calculations.hpp"
 #undef min
 #undef max
 
@@ -35,24 +36,9 @@ std::map<std::string, int> lookupCounter;
 permute::lookup glslLookup = {{"next", next}};
 } // namespace permute
 
-constexpr auto MAX_DEGREE = 7;
-
-struct Cell {
-
-  Cell() { this->polynomials.reserve(216); }
-  glm::vec3 centerOfCell;
-  glm::vec3 points[8];
-  std::vector<glm::vec4> polynomials;
-};
-
-size_t actualInUse = 0;
-std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
-std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 TGAppGUI *guiModul = new TGAppGUI;
 TGAppIO *ioModul = new TGAppIO;
 
-constexpr std::array<uint32_t, MAX_DEGREE> indexCount = {4,   4,   8,  144,
-                                                         256, 400, 576};
 
 inline std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
@@ -196,7 +182,7 @@ inline void readData(std::string &&input) {
     std::smatch matches;
     uint8_t numberIndex = 0;
     while (std::regex_search(line, matches, findNumbers,
-                              std::regex_constants::match_any)) {
+                             std::regex_constants::match_any)) {
       if (numberIndex != 0) {
         const std::string numberString = matches[1].str();
         if (numberString.empty())
@@ -234,53 +220,7 @@ inline void readData(std::string &&input) {
   cellsPerLayer[degree].push_back(cell);
 }
 
-inline void makeData() {
-  std::numeric_limits<float> flim;
-  float currentY = guiModul->currentY;
-  for (size_t i = 0; i < indexCount.size(); i++) {
-    const auto &cLayer = cellsPerLayer[i];
-    for (const auto &cell : cLayer) {
-      glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
-      glm::vec3 minVec(flim.max(), flim.max(), flim.max());
-      for (size_t z = 0; z < 8; z++) {
-        for (size_t id = 0; id < 3; id++) {
-          const auto current = cell.points[z][id];
-          maxVec[id] = std::max(maxVec[id], current);
-          minVec[id] = std::min(minVec[id], current);
-        }
-      }
-      if (!(maxVec.y >= currentY && currentY >= minVec.y))
-        continue;
-      const auto maxSize = indexCount[i];
-      auto &data = cellDataPerLayer[i];
-      const auto start = data.size();
-      data.resize(start + maxSize * 4);
-      if (maxSize == 4) {
-        data[start + 0] = glm::vec4(minVec.x, minVec.y, 0, 1);
-        data[start + 1] = glm::vec4(maxVec.x, minVec.y, 0, 1);
-        data[start + 2] = glm::vec4(maxVec.x, maxVec.y, 0, 1);
-        data[start + 3] = glm::vec4(minVec.x, maxVec.y, 0, 1);
-      } else {
-        const double side = std::sqrt(maxSize);
-        const glm::vec2 difference =
-            glm::vec2(maxVec - minVec) / glm::vec2(side);
-        for (size_t x = 0; x < maxSize; x++) {
-          const double xInterpolation = (x % (int)side);
-          const double yInterpolation = std::floor(x / side);
-          const auto position =
-              difference * glm::vec2(xInterpolation, yInterpolation) +
-              glm::vec2(minVec);
-          data[start + x * 4 + 3] =
-              glm::vec4(position.x, position.y + difference.y, 0, 1);
-          data[start + x * 4 + 2] = glm::vec4(position + difference, 0, 1);
-          data[start + x * 4 + 1] =
-              glm::vec4(position.x + difference.x, position.y, 0, 1);
-          data[start + x * 4 + 0] = glm::vec4(position, 0, 1);
-        }
-      }
-    }
-  }
-}
+
 
 int main() {
   lateModules.push_back(guiModul);
@@ -297,7 +237,7 @@ int main() {
   ioModul->api = api;
 
   readData("degree5.dcplt");
-  makeData();
+  makeData(guiModul->currentY,  guiModul->interpolation);
 
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =
