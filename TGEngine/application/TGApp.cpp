@@ -19,7 +19,10 @@
 #include <array>
 #include <cmath>
 #include <headerlibs/ShaderPermute.hpp>
+#include <iostream>
 #include <limits>
+#include <regex>
+#include <string>
 #undef min
 #undef max
 
@@ -35,6 +38,8 @@ permute::lookup glslLookup = {{"next", next}};
 constexpr auto MAX_DEGREE = 7;
 
 struct Cell {
+
+  Cell() { this->polynomials.reserve(216); }
   glm::vec3 centerOfCell;
   glm::vec3 points[8];
   std::vector<glm::vec4> polynomials;
@@ -180,52 +185,48 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
 
 inline void readData(std::string &&input) {
   std::ifstream fstream(input, std::ios_base::binary);
-  char control = 'M';
-  std::stringstream stream;
-  std::vector<float> floating;
   Cell cell;
-  uint32_t index = 0;
-  cell.polynomials.reserve(120);
-  while (!fstream.eof()) {
-    char nextChar = fstream.get();
-    if (nextChar == '\r')
-      continue;
-    if (nextChar == ';') {
-      stream = {};
-      continue;
+  std::regex findNumbers = std::regex("([^;,]*)[;,]*");
+  std::array<float, 4> numbers;
+  uint8_t index = 0;
+  while (fstream.good() && !fstream.eof()) {
+    std::string line;
+    std::getline(fstream, line);
+    const char control = line[0];
+    std::smatch matches;
+    uint8_t numberIndex = 0;
+    while (std::regex_search(line, matches, findNumbers,
+                              std::regex_constants::match_any)) {
+      if (numberIndex != 0) {
+        const std::string numberString = matches[1].str();
+        if (numberString.empty())
+          break;
+        const auto number = std::stof(numberString);
+        numbers[numberIndex - 1] = number;
+      }
+      numberIndex++;
+      line = matches.suffix().str();
     }
-    if (nextChar == ',' || nextChar == '\n') {
-      const auto string = stream.str();
-      floating.push_back(std::stof(string));
-      stream = {};
-      if (nextChar == '\n') {
-        switch (control) {
-        case 'M':
-          cell.centerOfCell = glm::vec3(floating[0], floating[1], floating[2]);
-          break;
-        case 'P':
-          cell.points[index] = glm::vec3(floating[0], floating[1], floating[2]);
-          index++;
-          break;
-        case 'V':
-          cell.polynomials.push_back(
-              glm::vec4(floating[0], floating[1], floating[2], floating[3]));
-        default:
-          break;
-        }
-        floating.clear();
-        stream = {};
-        control = '_';
-      }
-    } else if (control == '_') {
-      control = nextChar;
-      if (control == 'M') {
-        const uint32_t degree = std::pow(cell.polynomials.size(), 1 / 3);
+    switch (control) {
+    case 'M':
+      if (!cell.polynomials.empty()) {
+        const uint32_t degree =
+            std::round(std::pow(cell.polynomials.size(), 1 / 3.0f));
         cellsPerLayer[degree].push_back(cell);
-        cell = {};
       }
-    } else {
-      stream << nextChar;
+      index = 0;
+      cell = {};
+      cell.centerOfCell = glm::vec3(numbers[0], numbers[1], numbers[2]);
+      break;
+    case 'P':
+      cell.points[index++] = glm::vec3(numbers[0], numbers[1], numbers[2]);
+      break;
+    case 'V':
+      cell.polynomials.push_back(
+          glm::vec4(numbers[0], numbers[1], numbers[2], numbers[3]));
+      break;
+    default:
+      break;
     }
   }
   const uint32_t degree =
@@ -253,7 +254,7 @@ inline void makeData() {
       const auto maxSize = indexCount[i];
       auto &data = cellDataPerLayer[i];
       const auto start = data.size();
-      data.resize(start + maxSize*4);
+      data.resize(start + maxSize * 4);
       if (maxSize == 4) {
         data[start + 0] = glm::vec4(minVec.x, minVec.y, 0, 1);
         data[start + 1] = glm::vec4(maxVec.x, minVec.y, 0, 1);
@@ -295,7 +296,7 @@ int main() {
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
   ioModul->api = api;
 
-  readData("testInput.txt");
+  readData("degree5.dcplt");
   makeData();
 
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
