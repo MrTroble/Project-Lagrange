@@ -24,6 +24,7 @@ public:
     if (ImGui::Button("Apply")) {
       currentY = std::clamp(currentY, minY, maxY);
       interpolation = std::clamp(interpolation, minInterpolate, maxInterpolate);
+      makeData(currentY, interpolation);
     }
     ImGui::End();
   }

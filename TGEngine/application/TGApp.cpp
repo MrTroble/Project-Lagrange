@@ -169,7 +169,7 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
   return bufferID;
 }
 
-inline void readData(std::string &&input) {
+inline void readData(const std::string &&input) {
   std::ifstream fstream(input, std::ios_base::binary);
   Cell cell;
   std::regex findNumbers = std::regex("([^;,]*)[;,]*");

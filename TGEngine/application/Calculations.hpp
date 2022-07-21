@@ -1,44 +1,29 @@
 #pragma once
 
 #include "Polynomials.hpp"
+#include <array>
 #include <glm/glm.hpp>
 #include <vector>
-#include <array>
 
 constexpr auto MAX_DEGREE = 7;
 
 struct Cell {
 
-  Cell() { this->polynomials.reserve(216); }
+  Cell() {
+    this->polynomials.reserve(216);
+    const auto c = &PolynomialEntry<>::P0functions;
+  }
   glm::vec3 centerOfCell;
   glm::vec3 points[8];
   std::vector<glm::vec4> polynomials;
   uint32_t degreeX = 0;
   uint32_t degreeY = 0;
-
-  void calculatePolynomials() {
-    degreeX = std::round(std::pow(polynomials.size(), 1 / 3.0f));
-    degreeY = degreeX;
-    for (const auto &polynomial : polynomials) {
-    }
-  }
+  std::vector<float> edgeHeights;
 };
 
 extern std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
 extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 extern std::array<uint32_t, MAX_DEGREE> indexCount;
-
-template <class T = double> struct Entry {
-  P0<T> po;
-  P1<T> p1;
-  P2<T> p2;
-  P3<T> p3;
-  P4<T> p4;
-  P5<T> p5;
-  P6<T> p6;
-  P7<T> p7;
-};
-const Entry<double> entry;
 
 inline glm::vec4 calculateHeights(const Cell &cell, glm::vec2 position3,
                                   glm::vec2 position2, glm::vec2 position1,
@@ -46,10 +31,53 @@ inline glm::vec4 calculateHeights(const Cell &cell, glm::vec2 position3,
   return glm::vec4();
 }
 
+template <uint32_t degree>
+inline void calculate(const std::vector<Cell> &inout) {
+  const Polynomial<degree> poly;
+  for (Cell &cell : inout) {
+    for (size_t i = 0; i < ; i++) {
+    }
+    const double height = poly.execute(cell.);
+  }
+}
+
 inline void makeData(float currentY, int interpolations) {
   std::numeric_limits<float> flim;
+  for (auto &c : cellDataPerLayer)
+    c.clear();
   for (size_t i = 0; i < indexCount.size(); i++) {
     const auto &cLayer = cellsPerLayer[i];
+    switch (i) {
+    case 0:
+      calculate<0>(cLayer);
+      break;
+    case 1:
+      calculate<1>(cLayer);
+      break;
+    case 2:
+      calculate<2>(cLayer);
+      break;
+    case 3:
+      calculate<3>(cLayer);
+      break;
+    case 4:
+      calculate<4>(cLayer);
+      break;
+    case 5:
+      calculate<5>(cLayer);
+      break;
+    case 6:
+      calculate<6>(cLayer);
+      break;
+    case 7:
+      calculate<7>(cLayer);
+      break;
+    case 8:
+      calculate<8>(cLayer);
+      break;
+    default:
+      break;
+    }
     for (const auto &cell : cLayer) {
       glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
       glm::vec3 minVec(flim.max(), flim.max(), flim.max());
@@ -80,8 +108,6 @@ inline void makeData(float currentY, int interpolations) {
         const auto position3 =
             glm::vec2(position0.x, position0.y + difference.y);
 
-        glm::vec4 heights =
-            calculateHeights(cell, position3, position2, position1, position0);
         data[start + x * 4 + 3] = glm::vec4(position3, heights[0], 1);
         data[start + x * 4 + 2] = glm::vec4(position2, heights[1], 1);
         data[start + x * 4 + 1] = glm::vec4(position1, heights[2], 1);
