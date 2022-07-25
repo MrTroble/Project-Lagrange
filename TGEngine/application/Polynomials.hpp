@@ -5,21 +5,21 @@
 
 template <typename T = double> class PolynomialEntry {
 public:
-  T P0functions(T x, int i) const {
+  static T P0functions(T x, int i) {
     if (i == 0)
       return T(1.0);
     else
       THROW("Not implemented!")
   }
 
-  T P0Dfunctions(T x, int i) const {
+  static T P0Dfunctions(T x, int i) {
     if (i == 0)
       return T(0.0);
     else
       THROW("Not implemented!")
   }
 
-  T P1functions(T x, int i) const {
+  static T P1functions(T x, int i) {
     switch (i) {
     case 0:
       return 1 - x;
@@ -30,7 +30,7 @@ public:
     }
   }
 
-  T P1Dfunctions(T x, int i) const {
+  static T P1Dfunctions(T x, int i) {
     switch (i) {
     case 0:
       return T(-1.0);
@@ -41,7 +41,7 @@ public:
     }
   }
 
-  T P2functions(T x, int i) const {
+  static T P2functions(T x, int i) {
     switch (i) {
     case 0:
       return (2 * x - 1) * (x - 1);
@@ -54,7 +54,7 @@ public:
     }
   }
 
-  T P2Dfunctions(T x, int i) const {
+  static T P2Dfunctions(T x, int i) {
     switch (i) {
     case 0:
       return 4 * x - 3;
@@ -67,7 +67,7 @@ public:
     }
   }
 
-  T P3functions(T x, int i) const {
+  static T P3functions(T x, int i) {
     switch (i) {
     case 0:
       return -1 / T(2.0) * (3 * x - 1) * (3 * x - 2) * (x - 1);
@@ -82,7 +82,7 @@ public:
     }
   }
 
-  T P3Dfunctions(T x, int i) const {
+  static T P3Dfunctions(T x, int i) {
     switch (i) {
     case 0:
       return -27 / T(2.0) * x * x + 18 * x - 11 / T(2.0);
@@ -97,7 +97,7 @@ public:
     }
   }
 
-  T P4functions(T x, int i) const {
+  static T P4functions(T x, int i) {
     switch (i) {
     case 0:
       return 1 / T(6.0) * (4 * x - 1) * (4 * x - 2) * (4 * x - 3) * (x - 1);
@@ -114,7 +114,7 @@ public:
     }
   }
 
-  T P4Dfunctions(T x, int i) const {
+  static T P4Dfunctions(T x, int i) {
     T x2 = x * x;
     T x3 = x2 * x;
     switch (i) {
@@ -133,7 +133,7 @@ public:
     }
   }
 
-  T P5functions(T x, int i) const {
+  static T P5functions(T x, int i) {
     switch (i) {
     case 0:
       return -1.0 / T(24.0) * (x - 1) * (5 * x - 4) * (5 * x - 3) *
@@ -158,7 +158,7 @@ public:
     }
   }
 
-  T P5Dfunctions(T x, int i) const {
+  static T P5Dfunctions(T x, int i) {
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -181,7 +181,7 @@ public:
     }
   }
 
-  T P6functions(T x, int i) const {
+  static T P6functions(T x, int i) {
     switch (i) {
     case 0:
       return 1.0 / T(10.0) * (x - 1) * (2 * x - 1) * (3 * x - 2) * (3 * x - 1) *
@@ -209,7 +209,7 @@ public:
     }
   }
 
-  T P6Dfunctions(T x, int i) const {
+  static T P6Dfunctions(T x, int i) {
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -240,7 +240,7 @@ public:
     }
   }
 
-  T P7functions(T x, int i) const {
+  static T P7functions(T x, int i) {
     switch (i) {
     case 0:
       return -1.0 / T(720.0) * (x - 1) * (7 * x - 6) * (7 * x - 5) *
@@ -271,7 +271,7 @@ public:
     }
   }
 
-  T P7Dfunctions(T x, int i) const {
+  static T P7Dfunctions(T x, int i) {
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -315,7 +315,7 @@ public:
     }
   }
 
-  T P8functions(T x, int i) const {
+  static T P8functions(T x, int i) {
     switch (i) {
     case 0:
       return 1.0 / T(315.0) * (x - 1) * (2 * x - 1) * (4 * x - 3) *
@@ -350,7 +350,7 @@ public:
     }
   }
 
-  T P8Dfunctions(T x, int i) const {
+  static T P8Dfunctions(T x, int i) {
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -402,32 +402,30 @@ public:
 
 template <int degree, class T = double> class Polynomial {
 
-  PolynomialEntry<T> poly;
-
 public:
   constexpr double execute(T input, int i) const {
     static_assert(degree <= 8, "Degree out of range!");
     static_assert(degree >= 0, "Degree to low!");
     if constexpr (degree == 0) {
-      return poly.P0functions(input, i);
+      return PolynomialEntry<T>::P0functions(input, i);
     } else if constexpr (degree == 1) {
-      return poly.P1functions(input, i);
+      return PolynomialEntry<T>::P1functions(input, i);
     } else if constexpr (degree == 2) {
-      return poly.P2functions(input, i);
+      return PolynomialEntry<T>::P2functions(input, i);
     } else if constexpr (degree == 3) {
-      return poly.P3functions(input, i);
+      return PolynomialEntry<T>::P3functions(input, i);
     } else if constexpr (degree == 4) {
-      return poly.P4functions(input, i);
+      return PolynomialEntry<T>::P4functions(input, i);
     } else if constexpr (degree == 5) {
-      return poly.P5functions(input, i);
+      return PolynomialEntry<T>::P5functions(input, i);
     } else if constexpr (degree == 6) {
-      return poly.P6functions(input, i);
+      return PolynomialEntry<T>::P6functions(input, i);
     } else if constexpr (degree == 6) {
-      return poly.P6functions(input, i);
+      return PolynomialEntry<T>::P6functions(input, i);
     } else if constexpr (degree == 7) {
-      return poly.P7functions(input, i);
+      return PolynomialEntry<T>::P7functions(input, i);
     } else if constexpr (degree == 8) {
-      return poly.P8functions(input, i);
+      return PolynomialEntry<T>::P8functions(input, i);
     }
   }
 };

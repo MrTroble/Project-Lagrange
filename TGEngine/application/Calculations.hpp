@@ -60,9 +60,8 @@ inline std::function<T(T, int)> getFunction(const size_t degree) {
   }
 }
 
-inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches() {
+inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches(const double y) {
   std::array<std::vector<double>, MAX_DEGREE> yCaches;
-  const auto y = guiModul->currentY;
   for (size_t i = 0; i < yCaches.size(); i++) {
     std::vector<double> cache;
     cache.reserve(MAX_DEGREE + 1);
@@ -75,51 +74,58 @@ inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches() {
   return yCaches;
 }
 
+template <class T = double> struct CalculationInfo {
+  std::function<T(T, int)> xFunc;
+  std::function<T(T, int)> yFunc;
+  std::vector<double> cache;
+  std::tuple<size_t, size_t, size_t> dimensions;
+  std::vector<glm::vec4> polynomials;
+};
+
 template <class T = double>
-inline T calculateOne(const std::function<T(T, int)> &xFunc,
-                      const std::function<T(T, int)> &yFunc,
-                      const std::vector<double> &cache,
-                      const std::tuple<size_t, size_t, size_t> &dimensions,
-                      const std::vector<glm::vec4> &polynomials,
-                      const glm::vec2 position) {
-  T height{};
-  for (size_t x = 0; x <= std::get<0>(dimensions); x++) {
-    for (size_t y = 0; y <= std::get<1>(dimensions); y++) {
-      for (size_t z = 0; z <= std::get<2>(dimensions); z++) {
-        const auto alpha =
-            polynomials[x][3] + polynomials[y][3] + polynomials[z][3];
-        height +=
-            alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
+inline std::vector<T> calculateOne(const CalculationInfo<T> &calculationInfo,
+                                   const std::vector<glm::vec2> positions) {
+  const std::function<T(T, int)> &xFunc = calculationInfo.xFunc;
+  const std::function<T(T, int)> &yFunc = calculationInfo.yFunc;
+  const std::vector<double> &cache = calculationInfo.cache;
+  const std::tuple<size_t, size_t, size_t> &dimensions =
+      calculationInfo.dimensions;
+  const std::vector<glm::vec4> &polynomials = calculationInfo.polynomials;
+
+  std::vector<T> heights;
+  heights.reserve(positions.size());
+  for (const auto position : positions) {
+    T height{};
+    for (size_t x = 0; x <= std::get<0>(dimensions); x++) {
+      for (size_t y = 0; y <= std::get<1>(dimensions); y++) {
+        for (size_t z = 0; z <= std::get<2>(dimensions); z++) {
+          const auto alpha =
+              polynomials[x][3] + polynomials[y][3] + polynomials[z][3];
+          height +=
+              alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
+        }
       }
     }
+    heights.push_back(height);
   }
-  return height;
+  return heights;
 }
 
-inline void generatePatches() {
-  const auto yCaches = generateYCaches();
-  for (size_t layer = 0; layer < cellsPerLayer.size(); layer++) {
-    const auto [dX, dY, dZ] = degreeFromLayer(layer);
-    const auto &cells = cellsPerLayer[layer];
-    const auto xFunc = getFunction(dX);
-    const auto yFunc = getFunction(dY);
-    const auto &yCache = yCaches[dZ];
-    for (const auto &cell : cells) {
-      std::vector<glm::vec4> cellPolynomials;
-      cellPolynomials.reserve(cell.polynomials.size());
-      for (const auto &polynom : cell.polynomials) {
-      }
-    }
-  }
-}
-
-inline void makeData(float currentY, int interpolations) {
+inline void makeData(const float currentY, const int interpolations) {
   std::numeric_limits<float> flim;
   for (auto &c : cellDataPerLayer)
     c.clear();
+  const auto yCaches = generateYCaches(currentY);
   for (size_t i = 0; i < indexCount.size(); i++) {
     const auto &cLayer = cellsPerLayer[i];
+    CalculationInfo calculationInfo{};
+    calculationInfo.cache = yCaches[i];
+    calculationInfo.dimensions = degreeFromLayer(i);
+    const auto [dX, dY, dZ] = calculationInfo.dimensions;
+    calculationInfo.xFunc = getFunction(dX);
+    calculationInfo.yFunc = getFunction(dX);
     for (const auto &cell : cLayer) {
+      calculationInfo.polynomials = cell.polynomials;
       glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
       glm::vec3 minVec(flim.max(), flim.max(), flim.max());
       for (size_t z = 0; z < 8; z++) {
