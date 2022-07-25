@@ -9,16 +9,10 @@ constexpr auto MAX_DEGREE = 7;
 
 struct Cell {
 
-  Cell() {
-    this->polynomials.reserve(216);
-    const auto c = &PolynomialEntry<>::P0functions;
-  }
+  Cell() { this->polynomials.reserve(216); }
   glm::vec3 centerOfCell;
   glm::vec3 points[8];
   std::vector<glm::vec4> polynomials;
-  uint32_t degreeX = 0;
-  uint32_t degreeY = 0;
-  std::vector<float> edgeHeights;
 };
 
 extern std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
@@ -31,14 +25,34 @@ inline glm::vec4 calculateHeights(const Cell &cell, glm::vec2 position3,
   return glm::vec4();
 }
 
+struct Patch {
+  glm::vec3 positions[4];
+};
+
+std::array<std::vector<Patch>, MAX_DEGREE> patchLists;
+
+inline size_t degreeXFromLayer(size_t layer) { return layer; } // future method
+inline size_t degreeYFromLayer(size_t layer) { return layer; } // future method
+
+inline void generatePatches() {
+  for (size_t layer = 0; layer < cellsPerLayer.size(); layer++) {
+    const auto degreeX = degreeXFromLayer(layer);
+    const auto degreeY = degreeYFromLayer(layer);
+    const auto &cells = cellsPerLayer[layer];
+    const auto &patches = patchLists[layer];
+    for (const auto &cell : cells) {
+      std::vector<glm::vec4> cellPolynomials;
+      cellPolynomials.reserve(cell.polynomials.size());
+      for (const auto &polynom : cell.polynomials) {
+        
+      }
+    }
+  }
+}
+
 template <uint32_t degree>
 inline void calculate(const std::vector<Cell> &inout) {
   const Polynomial<degree> poly;
-  for (Cell &cell : inout) {
-    for (size_t i = 0; i < ; i++) {
-    }
-    const double height = poly.execute(cell.);
-  }
 }
 
 inline void makeData(float currentY, int interpolations) {
