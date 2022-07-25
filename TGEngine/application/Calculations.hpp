@@ -2,6 +2,7 @@
 
 #include "Polynomials.hpp"
 #include <array>
+#include <functional>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -29,30 +30,87 @@ struct Patch {
   glm::vec3 positions[4];
 };
 
-std::array<std::vector<Patch>, MAX_DEGREE> patchLists;
+inline std::tuple<size_t, size_t, size_t> degreeFromLayer(const size_t layer) {
+  return {layer, layer, layer};
+} // future method
 
-inline size_t degreeXFromLayer(size_t layer) { return layer; } // future method
-inline size_t degreeYFromLayer(size_t layer) { return layer; } // future method
+template <class T = double>
+inline std::function<T(T, int)> getFunction(const size_t degree) {
+  switch (degree) {
+  case 0:
+    return &PolynomialEntry<T>::P0functions;
+  case 1:
+    return &PolynomialEntry<T>::P1functions;
+  case 2:
+    return &PolynomialEntry<T>::P2functions;
+  case 3:
+    return &PolynomialEntry<T>::P3functions;
+  case 4:
+    return &PolynomialEntry<T>::P4functions;
+  case 5:
+    return &PolynomialEntry<T>::P5functions;
+  case 6:
+    return &PolynomialEntry<T>::P6functions;
+  case 7:
+    return &PolynomialEntry<T>::P7functions;
+  case 8:
+    return &PolynomialEntry<T>::P8functions;
+  default:
+    THROW("Unsupported degree!");
+  }
+}
+
+inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches() {
+  std::array<std::vector<double>, MAX_DEGREE> yCaches;
+  const auto y = guiModul->currentY;
+  for (size_t i = 0; i < yCaches.size(); i++) {
+    std::vector<double> cache;
+    cache.reserve(MAX_DEGREE + 1);
+    const auto function = getFunction(i);
+    for (size_t id = 0; id <= i; id++) {
+      cache.push_back(function(y, id));
+    }
+    yCaches[i] = cache;
+  }
+  return yCaches;
+}
+
+template <class T = double>
+inline T calculateOne(const std::function<T(T, int)> &xFunc,
+                      const std::function<T(T, int)> &yFunc,
+                      const std::vector<double> &cache,
+                      const std::tuple<size_t, size_t, size_t> &dimensions,
+                      const std::vector<glm::vec4> &polynomials,
+                      const glm::vec2 position) {
+  T height{};
+  for (size_t x = 0; x <= std::get<0>(dimensions); x++) {
+    for (size_t y = 0; y <= std::get<1>(dimensions); y++) {
+      for (size_t z = 0; z <= std::get<2>(dimensions); z++) {
+        const auto alpha =
+            polynomials[x][3] + polynomials[y][3] + polynomials[z][3];
+        height +=
+            alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
+      }
+    }
+  }
+  return height;
+}
 
 inline void generatePatches() {
+  const auto yCaches = generateYCaches();
   for (size_t layer = 0; layer < cellsPerLayer.size(); layer++) {
-    const auto degreeX = degreeXFromLayer(layer);
-    const auto degreeY = degreeYFromLayer(layer);
+    const auto [dX, dY, dZ] = degreeFromLayer(layer);
     const auto &cells = cellsPerLayer[layer];
-    const auto &patches = patchLists[layer];
+    const auto xFunc = getFunction(dX);
+    const auto yFunc = getFunction(dY);
+    const auto &yCache = yCaches[dZ];
     for (const auto &cell : cells) {
       std::vector<glm::vec4> cellPolynomials;
       cellPolynomials.reserve(cell.polynomials.size());
       for (const auto &polynom : cell.polynomials) {
-        
       }
     }
   }
-}
-
-template <uint32_t degree>
-inline void calculate(const std::vector<Cell> &inout) {
-  const Polynomial<degree> poly;
 }
 
 inline void makeData(float currentY, int interpolations) {
@@ -61,37 +119,6 @@ inline void makeData(float currentY, int interpolations) {
     c.clear();
   for (size_t i = 0; i < indexCount.size(); i++) {
     const auto &cLayer = cellsPerLayer[i];
-    switch (i) {
-    case 0:
-      calculate<0>(cLayer);
-      break;
-    case 1:
-      calculate<1>(cLayer);
-      break;
-    case 2:
-      calculate<2>(cLayer);
-      break;
-    case 3:
-      calculate<3>(cLayer);
-      break;
-    case 4:
-      calculate<4>(cLayer);
-      break;
-    case 5:
-      calculate<5>(cLayer);
-      break;
-    case 6:
-      calculate<6>(cLayer);
-      break;
-    case 7:
-      calculate<7>(cLayer);
-      break;
-    case 8:
-      calculate<8>(cLayer);
-      break;
-    default:
-      break;
-    }
     for (const auto &cell : cLayer) {
       glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
       glm::vec3 minVec(flim.max(), flim.max(), flim.max());
@@ -122,10 +149,10 @@ inline void makeData(float currentY, int interpolations) {
         const auto position3 =
             glm::vec2(position0.x, position0.y + difference.y);
 
-        data[start + x * 4 + 3] = glm::vec4(position3, heights[0], 1);
-        data[start + x * 4 + 2] = glm::vec4(position2, heights[1], 1);
-        data[start + x * 4 + 1] = glm::vec4(position1, heights[2], 1);
-        data[start + x * 4 + 0] = glm::vec4(position0, heights[3], 1);
+        data[start + x * 4 + 3] = glm::vec4(position3, 0, 1);
+        data[start + x * 4 + 2] = glm::vec4(position2, 0, 1);
+        data[start + x * 4 + 1] = glm::vec4(position1, 0, 1);
+        data[start + x * 4 + 0] = glm::vec4(position0, 0, 1);
       }
     }
   }
