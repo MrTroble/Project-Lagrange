@@ -14,6 +14,7 @@
 #define SPR_NO_GLSL_INCLUDE 1
 #define SPR_NO_STATIC 1
 #define SPR_STATIC extern
+#include "Calculations.hpp"
 #include "TGAppIO.hpp"
 #include <Util.hpp>
 #include <array>
@@ -23,7 +24,6 @@
 #include <limits>
 #include <regex>
 #include <string>
-#include "Calculations.hpp"
 #undef min
 #undef max
 
@@ -38,7 +38,6 @@ permute::lookup glslLookup = {{"next", next}};
 
 TGAppGUI *guiModul = new TGAppGUI;
 TGAppIO *ioModul = new TGAppIO;
-
 
 inline std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
@@ -65,7 +64,8 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     };
     permute::glslLookup["steps"] = permute::glslLookup["degree"];
     permute::glslLookup["allpoints"] = [&](const auto &input) {
-      return std::to_string(std::max(cellDataPerLayer[i].size(), (size_t)1));
+      return std::to_string(
+          std::max(CellEntry::cellDataPerLayer[i].size(), (size_t)1));
     };
     if (!perm.generate({std::to_string(i)})) {
       for (auto &str : perm.getContent())
@@ -122,12 +122,12 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
   std::vector<void *> data = {&ioModul->mvpMatrix};
   std::vector<size_t> layer = {};
   for (size_t i = 0; i < MAX_DEGREE; i++) {
-    if (cellDataPerLayer[i].empty())
+    if (CellEntry::cellDataPerLayer[i].empty())
       continue;
     layer.push_back(i);
-    sizes.push_back(cellDataPerLayer[i].size() *
-                    sizeof(cellDataPerLayer[i][0]));
-    data.push_back(cellDataPerLayer[i].data());
+    sizes.push_back(CellEntry::cellDataPerLayer[i].size() *
+                    sizeof(CellEntry::cellDataPerLayer[i][0]));
+    data.push_back(CellEntry::cellDataPerLayer[i].data());
   }
 
   const auto bufferID =
@@ -160,7 +160,7 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     renderInfo.materialId = materialID + i;
     renderInfo.firstInstance = 0;
     renderInfo.indexCount = 4;
-    renderInfo.instanceCount = cellDataPerLayer[cLayer].size() / 4;
+    renderInfo.instanceCount = CellEntry::cellDataPerLayer[cLayer].size() / 4;
     renderInfo.bindingID = shaderOffset + i;
     actualInfos.push_back(renderInfo);
   }
@@ -198,7 +198,7 @@ inline void readData(const std::string &&input) {
       if (!cell.polynomials.empty()) {
         const uint32_t degree =
             std::round(std::pow(cell.polynomials.size(), 1 / 3.0f));
-        cellsPerLayer[degree].push_back(cell);
+        CellEntry::cellsPerLayer[degree].push_back(cell);
       }
       index = 0;
       cell = {};
@@ -217,10 +217,38 @@ inline void readData(const std::string &&input) {
   }
   const uint32_t degree =
       std::round(std::pow(cell.polynomials.size(), 1 / 3.0f));
-  cellsPerLayer[degree].push_back(cell);
+  CellEntry::cellsPerLayer[degree].push_back(cell);
+  for (size_t i = 0; i < CellEntry::cellsPerLayer.size(); i++) {
+    const auto &layer = CellEntry::cellsPerLayer[i];
+    const auto [dx, dy, dz] = degreeFromLayer(i);
+    const auto countPerCell = dx * dy * dz;
+    auto &cache = CellEntry::polynomialCache[i];
+    const auto startID = cache.size();
+    cache.resize(startID + countPerCell * layer.size());
+    auto &minCache = CellEntry::maxCache[i];
+    minCache.reserve(layer.size());
+    for (size_t c = 0; c < layer.size(); c++) {
+      auto polynomials = layer[c].polynomials;
+      minCache.push_back(glm::vec3(polynomials[0]));
+      const auto compare = std::less<float>();
+      std::sort(begin(polynomials), end(polynomials), [&](auto v1, auto v2) {
+        const auto firstCheck = compare(v1.x, v2.x);
+        if (!firstCheck) {
+          const auto secondCheck = compare(v1.y, v2.y);
+          if (!secondCheck) {
+            return compare(v1.z, v2.z);
+          }
+          return secondCheck;
+        }
+        return firstCheck;
+      });
+      for (size_t p = 0; p < polynomials.size(); p++) {
+        const auto a = polynomials[p][3];
+        cache[startID + p + c * countPerCell] = a;
+      }
+    }
+  }
 }
-
-
 
 int main() {
   lateModules.push_back(guiModul);
@@ -237,7 +265,7 @@ int main() {
   ioModul->api = api;
 
   readData("degree5.dcplt");
-  makeData(guiModul->currentY,  guiModul->interpolation);
+  makeData(guiModul->currentY, guiModul->interpolation);
 
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID =

@@ -1,34 +1,11 @@
 #pragma once
 
+#include "CellEntry.hpp"
 #include "Polynomials.hpp"
 #include <array>
 #include <functional>
 #include <glm/glm.hpp>
 #include <vector>
-
-constexpr auto MAX_DEGREE = 7;
-
-struct Cell {
-
-  Cell() { this->polynomials.reserve(216); }
-  glm::vec3 centerOfCell;
-  glm::vec3 points[8];
-  std::vector<glm::vec4> polynomials;
-};
-
-extern std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
-extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
-extern std::array<uint32_t, MAX_DEGREE> indexCount;
-
-inline glm::vec4 calculateHeights(const Cell &cell, glm::vec2 position3,
-                                  glm::vec2 position2, glm::vec2 position1,
-                                  glm::vec2 position0) {
-  return glm::vec4();
-}
-
-struct Patch {
-  glm::vec3 positions[4];
-};
 
 inline std::tuple<size_t, size_t, size_t> degreeFromLayer(const size_t layer) {
   return {layer, layer, layer};
@@ -60,7 +37,8 @@ inline std::function<T(T, int)> getFunction(const size_t degree) {
   }
 }
 
-inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches(const double y) {
+inline std::array<std::vector<double>, MAX_DEGREE>
+generateYCaches(const double y) {
   std::array<std::vector<double>, MAX_DEGREE> yCaches;
   for (size_t i = 0; i < yCaches.size(); i++) {
     std::vector<double> cache;
@@ -74,33 +52,32 @@ inline std::array<std::vector<double>, MAX_DEGREE> generateYCaches(const double 
   return yCaches;
 }
 
-template <class T = double> struct CalculationInfo {
+template <class T = double>
+struct CalculationInfo {
   std::function<T(T, int)> xFunc;
   std::function<T(T, int)> yFunc;
   std::vector<double> cache;
   std::tuple<size_t, size_t, size_t> dimensions;
-  std::vector<glm::vec4> polynomials;
 };
 
-template <class T = double>
-inline std::vector<T> calculateOne(const CalculationInfo<T> &calculationInfo,
-                                   const std::vector<glm::vec2> positions) {
-  const std::function<T(T, int)> &xFunc = calculationInfo.xFunc;
-  const std::function<T(T, int)> &yFunc = calculationInfo.yFunc;
-  const std::vector<double> &cache = calculationInfo.cache;
-  const std::tuple<size_t, size_t, size_t> &dimensions =
-      calculationInfo.dimensions;
-  const std::vector<glm::vec4> &polynomials = calculationInfo.polynomials;
+template <typename Itr, class T = double>
+inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
+                                      const Itr pPolynomials,
+                                      const std::vector<glm::vec2> &positions) {
+  const auto &xFunc = calculationInfo.xFunc;
+  const auto &yFunc = calculationInfo.yFunc;
+  const auto &cache = calculationInfo.cache;
+  const auto [dX, dY, dZ] = calculationInfo.dimensions;
+  const auto polynomials = pPolynomials;
 
   std::vector<T> heights;
   heights.reserve(positions.size());
   for (const auto position : positions) {
     T height{};
-    for (size_t x = 0; x <= std::get<0>(dimensions); x++) {
-      for (size_t y = 0; y <= std::get<1>(dimensions); y++) {
-        for (size_t z = 0; z <= std::get<2>(dimensions); z++) {
-          const auto alpha =
-              polynomials[x][3] + polynomials[y][3] + polynomials[z][3];
+    for (size_t x = 0; x <= dX; x++) {
+      for (size_t y = 0; y <= dY; y++) {
+        for (size_t z = 0; z <= dZ; z++) {
+          const auto alpha = ;
           height +=
               alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
         }
@@ -112,54 +89,33 @@ inline std::vector<T> calculateOne(const CalculationInfo<T> &calculationInfo,
 }
 
 inline void makeData(const float currentY, const int interpolations) {
-  std::numeric_limits<float> flim;
-  for (auto &c : cellDataPerLayer)
+  std::numeric_limits<double> flim;
+  for (auto &c : CellEntry::cellDataPerLayer)
     c.clear();
   const auto yCaches = generateYCaches(currentY);
-  for (size_t i = 0; i < indexCount.size(); i++) {
-    const auto &cLayer = cellsPerLayer[i];
+  for (size_t i = 0; i < CellEntry::indexCount.size(); i++) {
+    const auto &cLayer = CellEntry::cellsPerLayer[i];
     CalculationInfo calculationInfo{};
     calculationInfo.cache = yCaches[i];
     calculationInfo.dimensions = degreeFromLayer(i);
     const auto [dX, dY, dZ] = calculationInfo.dimensions;
     calculationInfo.xFunc = getFunction(dX);
     calculationInfo.yFunc = getFunction(dX);
-    for (const auto &cell : cLayer) {
-      calculationInfo.polynomials = cell.polynomials;
-      glm::vec3 maxVec(flim.min(), flim.min(), flim.min());
-      glm::vec3 minVec(flim.max(), flim.max(), flim.max());
+    const auto countPerCell = dX * dY * dZ;
+    const auto &cache = CellEntry::polynomialCache[i];
+    const auto beginItr = std::cbegin(cache);
+    for (size_t c = 0; c < cLayer.size(); c++) {
+      auto maxY = flim.min();
+      auto minY = flim.max();
+      const auto &cell = cLayer[c];
       for (size_t z = 0; z < 8; z++) {
-        for (size_t id = 0; id < 3; id++) {
-          const auto current = cell.points[z][id];
-          maxVec[id] = std::max(maxVec[id], current);
-          minVec[id] = std::min(minVec[id], current);
-        }
+        const double current = cell.points[z].z;
+        maxY = std::max(maxY, current);
+        minY = std::min(minY, current);
       }
-      if (!(maxVec.y >= currentY && currentY >= minVec.y))
+      if (!(maxY >= currentY && currentY >= minY))
         continue;
-      const auto maxSize = indexCount[i];
-      auto &data = cellDataPerLayer[i];
-      const auto start = data.size();
-      data.resize(start + maxSize * 4);
-      const double side = std::sqrt(maxSize);
-      const glm::vec2 difference = glm::vec2(maxVec - minVec) / glm::vec2(side);
-      for (size_t x = 0; x < maxSize; x++) {
-        const double xInterpolation = (x % (int)side);
-        const double yInterpolation = std::floor(x / side);
-        const auto position0 =
-            difference * glm::vec2(xInterpolation, yInterpolation) +
-            glm::vec2(minVec);
-        const auto position1 =
-            glm::vec2(position0.x + difference.x, position0.y);
-        const auto position2 = position0 + difference;
-        const auto position3 =
-            glm::vec2(position0.x, position0.y + difference.y);
-
-        data[start + x * 4 + 3] = glm::vec4(position3, 0, 1);
-        data[start + x * 4 + 2] = glm::vec4(position2, 0, 1);
-        data[start + x * 4 + 1] = glm::vec4(position1, 0, 1);
-        data[start + x * 4 + 0] = glm::vec4(position0, 0, 1);
-      }
+      const auto iter = beginItr + (c * countPerCell);
     }
   }
 }
