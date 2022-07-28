@@ -77,7 +77,7 @@ inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
     for (size_t x = 0; x <= dX; x++) {
       for (size_t y = 0; y <= dY; y++) {
         for (size_t z = 0; z <= dZ; z++) {
-          const auto alpha = ;
+          const auto alpha = *(polynomials + (z * dX * dY + y * dX + x));
           height +=
               alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
         }
@@ -115,7 +115,10 @@ inline void makeData(const float currentY, const int interpolations) {
       }
       if (!(maxY >= currentY && currentY >= minY))
         continue;
+      std::vector<glm::vec2> position;
       const auto iter = beginItr + (c * countPerCell);
+      const auto &heightCache =
+          calculateHeight(calculationInfo, iter, position);
     }
   }
 }

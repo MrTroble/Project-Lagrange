@@ -169,6 +169,38 @@ inline uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
   return bufferID;
 }
 
+inline void prepareData() {
+  for (size_t i = 0; i < CellEntry::cellsPerLayer.size(); i++) {
+    const auto &layer = CellEntry::cellsPerLayer[i];
+    const auto [dx, dy, dz] = degreeFromLayer(i);
+    const auto countPerCell = dx * dy * dz;
+    auto &cache = CellEntry::polynomialCache[i];
+    const auto startID = cache.size();
+    cache.resize(startID + countPerCell * layer.size());
+    auto &minCache = CellEntry::maxCache[i];
+    minCache.reserve(layer.size());
+    for (size_t c = 0; c < layer.size(); c++) {
+      auto polynomials = layer[c].polynomials;
+      const auto min = polynomials[0];
+      const auto minVec = glm::vec4(glm::vec3(min), 0);
+      for (auto &poly : polynomials) {
+        poly -= minVec;
+      }
+      minCache.push_back(glm::vec3(min));
+      std::stable_sort(begin(polynomials), end(polynomials),
+                       [&](auto v1, auto v2) { return v1.x < v2.x; });
+      std::stable_sort(begin(polynomials), end(polynomials),
+                       [&](auto v1, auto v2) { return v1.y < v2.y; });
+      std::stable_sort(begin(polynomials), end(polynomials),
+                       [&](auto v1, auto v2) { return v1.z < v2.z; });
+      for (size_t p = 0; p < polynomials.size(); p++) {
+        const auto a = polynomials[p][3];
+        cache[startID + p + c * countPerCell] = a;
+      }
+    }
+  }
+}
+
 inline void readData(const std::string &&input) {
   std::ifstream fstream(input, std::ios_base::binary);
   Cell cell;
@@ -218,36 +250,7 @@ inline void readData(const std::string &&input) {
   const uint32_t degree =
       std::round(std::pow(cell.polynomials.size(), 1 / 3.0f));
   CellEntry::cellsPerLayer[degree].push_back(cell);
-  for (size_t i = 0; i < CellEntry::cellsPerLayer.size(); i++) {
-    const auto &layer = CellEntry::cellsPerLayer[i];
-    const auto [dx, dy, dz] = degreeFromLayer(i);
-    const auto countPerCell = dx * dy * dz;
-    auto &cache = CellEntry::polynomialCache[i];
-    const auto startID = cache.size();
-    cache.resize(startID + countPerCell * layer.size());
-    auto &minCache = CellEntry::maxCache[i];
-    minCache.reserve(layer.size());
-    for (size_t c = 0; c < layer.size(); c++) {
-      auto polynomials = layer[c].polynomials;
-      minCache.push_back(glm::vec3(polynomials[0]));
-      const auto compare = std::less<float>();
-      std::sort(begin(polynomials), end(polynomials), [&](auto v1, auto v2) {
-        const auto firstCheck = compare(v1.x, v2.x);
-        if (!firstCheck) {
-          const auto secondCheck = compare(v1.y, v2.y);
-          if (!secondCheck) {
-            return compare(v1.z, v2.z);
-          }
-          return secondCheck;
-        }
-        return firstCheck;
-      });
-      for (size_t p = 0; p < polynomials.size(); p++) {
-        const auto a = polynomials[p][3];
-        cache[startID + p + c * countPerCell] = a;
-      }
-    }
-  }
+  prepareData();
 }
 
 int main() {
