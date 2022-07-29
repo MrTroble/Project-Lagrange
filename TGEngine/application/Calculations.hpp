@@ -94,6 +94,7 @@ inline void makeData(const float currentY, const int interpolations) {
     c.clear();
   const auto yCaches = generateYCaches(currentY);
   for (size_t i = 0; i < CellEntry::indexCount.size(); i++) {
+    const auto indexCount = CellEntry::indexCount[i];
     const auto &cLayer = CellEntry::cellsPerLayer[i];
     CalculationInfo calculationInfo{};
     calculationInfo.cache = yCaches[i];
@@ -104,6 +105,9 @@ inline void makeData(const float currentY, const int interpolations) {
     const auto countPerCell = dX * dY * dZ;
     const auto &cache = CellEntry::polynomialCache[i];
     const auto beginItr = std::cbegin(cache);
+    auto &cellData = CellEntry::cellDataPerLayer[i];
+    const auto startID = cellData.size();
+    cellData.resize(startID + cLayer.size() * indexCount * 4);
     for (size_t c = 0; c < cLayer.size(); c++) {
       auto maxY = flim.min();
       auto minY = flim.max();
