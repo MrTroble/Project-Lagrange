@@ -121,23 +121,41 @@ interpolate(const CalculationInfo<T> &calculationInfo,
   std::vector<glm::vec2> positions2D;
   const auto parts = count + 1;
   const auto points = parts + 1;
-  positions2D.resize(points * points *);
+  positions2D.resize(points * points * interpolations.size());
   for (size_t i = 0; i < interpolations.size(); i++) {
     const auto interpolate = interpolations[i];
     const auto differnce = interpolate.point2 - interpolate.point1;
     const auto step = differnce / (float)parts;
-    const auto startIndex = positions.size();
+    const auto startIndex = i * points * points;
     for (size_t x = 0; x < points; x++) {
       for (size_t y = 0; y < points; y++) {
-        const auto first = interpolate.point1 + step * glm::vec2(x, y);
-        positions[x + y * points + startIndex] = first;
+        const auto offset = x + y * points + startIndex;
+        positions[offset] = interpolate.point1 + step * glm::vec2(x, y);
       }
     }
   }
   const auto heights = calculateHeight<T>(calculationInfo, positions2D);
+  positions.reserve(parts * parts * 4 * interpolations.size());
   for (size_t i = 0; i < interpolations.size(); i++) {
-    for (size_t x = 0; x < points; x++) {
-      for (size_t y = 0; y < points; y++) {
+    const auto interpolate = interpolations[i];
+    const auto startIndex = i * points * points;
+    for (size_t x = 0; x < parts; x++) {
+      for (size_t y = 0; y < parts; y++) {
+        const auto first = x + y * parts + startIndex;
+        const auto nextY = x + (y + 1) * parts + startIndex;
+        const auto position1 =
+            glm::vec4(points[first] + interpolate.pivot, heights[first], 0);
+        const auto position2 = glm::vec4(points[first + 1] + interpolate.pivot,
+                                         heights[first + 1], 0);
+
+        const auto position3 =
+            glm::vec4(points[nextY + 1] + interpolate.pivot, heights[nextY + 1], 0);
+        const auto position4 = glm::vec4(points[nextY + 1] + interpolate.pivot,
+                                         heights[nextY + 1], 0);
+        positions.push_back(position1);
+        positions.push_back(position2);
+        positions.push_back(position3);
+        positions.push_back(position4);
       }
     }
   }
