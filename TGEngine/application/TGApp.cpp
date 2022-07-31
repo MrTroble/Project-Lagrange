@@ -174,25 +174,20 @@ inline void prepareData() {
     const auto &layer = CellEntry::cellsPerLayer[i];
     const auto [dx, dy, dz] = degreeFromLayer(i);
     const auto countPerCell = dx * dy * dz;
-    auto &cache = CellEntry::polynomialCache[i];
+    auto &cache = CellEntry::polynomialHeightCache[i];
     const auto startID = cache.size();
     cache.resize(startID + countPerCell * layer.size());
-    auto &minCache = CellEntry::maxCache[i];
-    minCache.reserve(layer.size());
+    auto &localcache = CellEntry::localPositions[i];
+    localcache.resize(layer.size());
     for (size_t c = 0; c < layer.size(); c++) {
       auto polynomials = layer[c].polynomials;
       const auto min = polynomials[0];
       const auto minVec = glm::vec4(glm::vec3(min), 0);
-      for (auto &poly : polynomials) {
-        poly -= minVec;
+
+      for (size_t p = 0; p < polynomials.size(); p++) {
+        polynomials[p] -= minVec;
       }
-      minCache.push_back(glm::vec3(min));
-      std::stable_sort(begin(polynomials), end(polynomials),
-                       [&](auto v1, auto v2) { return v1.x < v2.x; });
-      std::stable_sort(begin(polynomials), end(polynomials),
-                       [&](auto v1, auto v2) { return v1.y < v2.y; });
-      std::stable_sort(begin(polynomials), end(polynomials),
-                       [&](auto v1, auto v2) { return v1.z < v2.z; });
+      localcache.push_back(polynomials);
       for (size_t p = 0; p < polynomials.size(); p++) {
         const auto a = polynomials[p][3];
         cache[startID + p + c * countPerCell] = a;
