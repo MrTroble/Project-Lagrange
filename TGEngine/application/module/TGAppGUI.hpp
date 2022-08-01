@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <graphics/GUIModule.hpp>
 #include <imgui.h>
-#include "Calculations.hpp"
+#include "../util/Calculations.hpp"
 
 constexpr auto minY = -100.0f;
 constexpr auto maxY = 100.0f;

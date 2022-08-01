@@ -3,7 +3,7 @@
 #include <IO/IOModule.hpp>
 #include <glm/glm.hpp>
 #include <graphics/GameGraphicsModule.hpp>
-#include "Calculations.hpp"
+#include "../util/Calculations.hpp"
 
 class TGAppIO : public tge::io::IOModule {
 public:
