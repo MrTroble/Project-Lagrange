@@ -31,4 +31,15 @@ extern std::array<std::vector<glm::vec2>, MAX_DEGREE>
 // Renderdata
 extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 
+inline void reset() {
+  for (auto &toReset : cellsPerLayer)
+    toReset.clear();
+  for (auto &toReset : polynomialHeightCache)
+    toReset.clear();
+  for (auto &toReset : localPositions)
+    toReset.clear();
+  for (auto &toReset : cellDataPerLayer)
+    toReset.clear();
+}
+
 } // namespace CellEntry

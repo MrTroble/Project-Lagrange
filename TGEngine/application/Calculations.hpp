@@ -33,8 +33,6 @@ inline std::function<T(T, int)> getFunction(const size_t degree) {
   }
 }
 
-inline void getX(std::vector<glm::vec2> &data, uint32_t t) {}
-
 inline std::array<std::vector<double>, MAX_DEGREE>
 generateYCaches(const double y) {
   std::array<std::vector<double>, MAX_DEGREE> yCaches;
@@ -176,7 +174,7 @@ inline void makeData(const float currentY, const int interpolationCount) {
       for (size_t x = 0; x < dX - 1; x++) {
         for (size_t y = 0; y < dY - 1; y++) {
           const auto local1 = locals[x + y * dX];
-          const auto local2 = locals[x + (y + 1) * dX + 1];
+          const auto local2 = locals[x + 1 + (y + 1) * dX];
           interpolations[x + y * dX] = {local1, local2};
         }
       }
