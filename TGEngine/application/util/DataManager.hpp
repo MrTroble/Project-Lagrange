@@ -1,11 +1,11 @@
+#include "CellEntry.hpp"
 #include <array>
 #include <cmath>
-#include "CellEntry.hpp"
-#include <iostream>
 #include <fstream>
+#include <glm/glm.hpp>
+#include <iostream>
 #include <regex>
 #include <string>
-#include <glm/glm.hpp>
 
 inline void prepareData() {
   for (size_t i = 0; i < CellEntry::cellsPerLayer.size(); i++) {
@@ -19,8 +19,9 @@ inline void prepareData() {
     const auto localStart = localcache.size();
     localcache.resize(layer.size() * dx * dy + localStart);
     for (size_t c = 0; c < layer.size(); c++) {
-      auto polynomials = layer[c].polynomials;
-      const auto min = polynomials[0];
+      const auto &cell = layer[c];
+      auto polynomials = cell.polynomials;
+      const auto min = cell.points[0];
       const auto minVec = glm::vec4(glm::vec3(min), 0);
 
       for (size_t p = 0; p < polynomials.size(); p++) {
@@ -53,6 +54,8 @@ inline void prepareData() {
 
 inline void readData(const std::string &&input) {
   std::ifstream fstream(input, std::ios_base::binary);
+  if (!fstream)
+    throw std::runtime_error("Could not find file!");
   Cell cell;
   std::regex findNumbers = std::regex("([^;,]*)[;,]*");
   std::array<float, 4> numbers;
