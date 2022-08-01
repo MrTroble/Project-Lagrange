@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.12)
 
 project ("TGEngine")
 set(CMAKE_CXX_STANDARD 20)
@@ -95,6 +95,6 @@ add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp")
 target_include_directories(TGApp PUBLIC "public")
 target_link_libraries(TGApp PUBLIC TGEngine)
 
-add_executable(TGAppTest "application/test/TGTest.cpp")
+add_executable(TGAppTest "application/test/TGTest.cpp" "application/util/CellEntry.cpp")
 target_include_directories(TGAppTest PUBLIC "public")
-target_link_libraries(TGAppTest PUBLIC TGEngine)
+target_link_libraries(TGAppTest PUBLIC TGEngine gtest_main)

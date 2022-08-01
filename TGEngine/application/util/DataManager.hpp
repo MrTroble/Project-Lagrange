@@ -2,6 +2,7 @@
 #include <cmath>
 #include "CellEntry.hpp"
 #include <iostream>
+#include <fstream>
 #include <regex>
 #include <string>
 #include <glm/glm.hpp>
