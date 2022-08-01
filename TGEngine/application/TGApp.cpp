@@ -178,7 +178,7 @@ inline void prepareData() {
     const auto startID = cache.size();
     cache.resize(startID + countPerCell * layer.size());
     auto &localcache = CellEntry::localPositions[i];
-    localcache.resize(layer.size());
+    localcache.resize(layer.size() * countPerCell);
     for (size_t c = 0; c < layer.size(); c++) {
       auto polynomials = layer[c].polynomials;
       const auto min = polynomials[0];
@@ -187,10 +187,21 @@ inline void prepareData() {
       for (size_t p = 0; p < polynomials.size(); p++) {
         polynomials[p] -= minVec;
       }
-      localcache.push_back(polynomials);
+
+      const auto sIter = begin(polynomials);
+      const auto eIter = end(polynomials);
+      std::stable_sort(sIter, eIter,
+                       [&](auto v1, auto v2) { return v1.x < v2.x; });
+      std::stable_sort(sIter, eIter,
+                       [&](auto v1, auto v2) { return v1.y < v2.y; });
+      std::stable_sort(sIter, eIter,
+                       [&](auto v1, auto v2) { return v1.z < v2.z; });
+
       for (size_t p = 0; p < polynomials.size(); p++) {
         const auto a = polynomials[p][3];
-        cache[startID + p + c * countPerCell] = a;
+        const auto offset = startID + p + c * countPerCell;
+        cache[offset] = a;
+        localcache[offset] = glm::vec2(polynomials[p]);
       }
     }
   }

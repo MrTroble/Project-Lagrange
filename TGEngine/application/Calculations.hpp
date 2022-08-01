@@ -55,7 +55,7 @@ template <class T = double> struct CalculationInfo {
   std::function<T(T, int)> yFunc;
   std::vector<double> cache;
   std::tuple<size_t, size_t, size_t> dimensions;
-  T *pPolynomials;
+  const T *pPolynomials;
 };
 
 template <class T = double>
@@ -85,29 +85,7 @@ inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
   return heights;
 }
 
-struct GlobalLocal {
-  glm::vec4 global;
-  glm::vec4 local;
-};
-
-class Storage {
-  std::vector<GlobalLocal> data;
-  glm::vec2 yExtent{};
-
-  Storage(const std::vector<glm::vec4> &rawData) {
-    data.resize(rawData.size());
-    const auto pivot = glm::vec4(glm::vec3(rawData[0]), 0);
-    for (size_t i = 0; i < rawData.size(); i++) {
-      const auto position = rawData[i];
-      data[i] = {position, position - pivot};
-      yExtent.x = std::min(yExtent.x, position.z);
-      yExtent.y = std::max(yExtent.y, position.z);
-    }
-  }
-};
-
 template <class T = double> struct InterpolateInfo {
-  glm::vec2 pivot;
   glm::vec2 point1;
   glm::vec2 point2;
 };
@@ -116,7 +94,7 @@ template <class T = double>
 inline std::vector<glm::vec4>
 interpolate(const CalculationInfo<T> &calculationInfo,
             const std::vector<InterpolateInfo<T>> &interpolations,
-            const size_t count) {
+            const glm::vec2 pivot, const size_t count) {
   std::vector<glm::vec4> positions;
   std::vector<glm::vec2> positions2D;
   const auto parts = count + 1;
@@ -130,10 +108,11 @@ interpolate(const CalculationInfo<T> &calculationInfo,
     for (size_t x = 0; x < points; x++) {
       for (size_t y = 0; y < points; y++) {
         const auto offset = x + y * points + startIndex;
-        positions[offset] = interpolate.point1 + step * glm::vec2(x, y);
+        positions2D[offset] = interpolate.point1 + step * glm::vec2(x, y);
       }
     }
   }
+
   const auto heights = calculateHeight<T>(calculationInfo, positions2D);
   positions.reserve(parts * parts * 4 * interpolations.size());
   for (size_t i = 0; i < interpolations.size(); i++) {
@@ -144,14 +123,14 @@ interpolate(const CalculationInfo<T> &calculationInfo,
         const auto first = x + y * parts + startIndex;
         const auto nextY = x + (y + 1) * parts + startIndex;
         const auto position1 =
-            glm::vec4(points[first] + interpolate.pivot, heights[first], 0);
-        const auto position2 = glm::vec4(points[first + 1] + interpolate.pivot,
-                                         heights[first + 1], 0);
+            glm::vec4(positions2D[first] + pivot, heights[first], 0);
+        const auto position2 =
+            glm::vec4(positions2D[first + 1] + pivot, heights[first + 1], 0);
 
         const auto position3 =
-            glm::vec4(points[nextY + 1] + interpolate.pivot, heights[nextY + 1], 0);
-        const auto position4 = glm::vec4(points[nextY + 1] + interpolate.pivot,
-                                         heights[nextY + 1], 0);
+            glm::vec4(positions2D[nextY + 1] + pivot, heights[nextY + 1], 0);
+        const auto position4 =
+            glm::vec4(positions2D[nextY + 1] + pivot, heights[nextY + 1], 0);
         positions.push_back(position1);
         positions.push_back(position2);
         positions.push_back(position3);
@@ -162,7 +141,7 @@ interpolate(const CalculationInfo<T> &calculationInfo,
   return positions;
 }
 
-inline void makeData(const float currentY, const int interpolations) {
+inline void makeData(const float currentY, const int interpolationCount) {
   std::numeric_limits<double> flim;
   for (auto &c : CellEntry::cellDataPerLayer)
     c.clear();
@@ -174,13 +153,13 @@ inline void makeData(const float currentY, const int interpolations) {
     calculationInfo.dimensions = degreeFromLayer(i);
     const auto [dX, dY, dZ] = calculationInfo.dimensions;
     calculationInfo.xFunc = getFunction(dX);
-    calculationInfo.yFunc = getFunction(dX);
+    calculationInfo.yFunc = getFunction(dY);
     const auto countPerCell = dX * dY * dZ;
     const auto &cache = CellEntry::polynomialHeightCache[i];
-    const auto beginItr = std::cbegin(cache);
+    const auto &locals = CellEntry::localPositions[i];
     auto &cellData = CellEntry::cellDataPerLayer[i];
-    const auto startID = cellData.size();
     for (size_t c = 0; c < cLayer.size(); c++) {
+      calculationInfo.pPolynomials = cache.data() + countPerCell * c;
       auto maxY = flim.min();
       auto minY = flim.max();
       const auto &cell = cLayer[c];
@@ -191,6 +170,22 @@ inline void makeData(const float currentY, const int interpolations) {
       }
       if (!(maxY >= currentY && currentY >= minY))
         continue;
+      const auto pivot = glm::vec2(cell.points[0]);
+      std::vector<InterpolateInfo<>> interpolations;
+      interpolations.resize(dX * dY);
+      for (size_t x = 0; x < dX - 1; x++) {
+        for (size_t y = 0; y < dY - 1; y++) {
+          const auto local1 = locals[x + y * dX];
+          const auto local2 = locals[x + (y + 1) * dX + 1];
+          interpolations[x + y * dX] = {local1, local2};
+        }
+      }
+      const auto positionsOut = interpolate(calculationInfo, interpolations,
+                                            pivot, interpolationCount);
+      const auto start = cellData.size();
+      cellData.resize(start + positionsOut.size());
+      std::copy(begin(positionsOut), end(positionsOut),
+                begin(cellData) + start);
     }
   }
 }

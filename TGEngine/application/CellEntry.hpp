@@ -25,10 +25,8 @@ namespace CellEntry {
 extern std::array<std::vector<Cell>, MAX_DEGREE> cellsPerLayer;
 
 extern std::array<std::vector<double>, MAX_DEGREE> polynomialHeightCache;
-extern std::array<std::vector<std::vector<glm::vec2>>, MAX_DEGREE>
+extern std::array<std::vector<glm::vec2>, MAX_DEGREE>
     localPositions;
-extern std::array<std::vector<std::vector<glm::vec2>>, MAX_DEGREE>
-    globalPositions;
 
 // Renderdata
 extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
