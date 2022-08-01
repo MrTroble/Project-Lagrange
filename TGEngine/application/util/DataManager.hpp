@@ -44,7 +44,7 @@ inline void prepareData() {
       }
       for (size_t x = 0; x < dx; x++) {
         for (size_t y = 0; y < dy; y++) {
-          localcache[x + dx * y + localStart] =
+          localcache[x + dx * y + localStart + (c * dx * dy)] =
               glm::vec2(polynomials[x + dx * y]);
         }
       }
