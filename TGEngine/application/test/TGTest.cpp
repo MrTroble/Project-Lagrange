@@ -87,13 +87,30 @@ TEST(maketest, sample1) {
   CalculationInfo<> info;
   info.xFunc = getFunction(3);
   info.yFunc = getFunction(3);
-  std::function<double(double, int)> referenceFunc = PolynomialEntry<>::P2functions; 
-  EXPECT_STREQ(info.xFunc.target_type().raw_name(), referenceFunc.target_type().raw_name());
+  std::function<double(double, int)> referenceFunc =
+      PolynomialEntry<>::P2functions;
+  EXPECT_STREQ(info.xFunc.target_type().raw_name(),
+               referenceFunc.target_type().raw_name());
   info.dimensions = degreeFromLayer(3);
+  const auto [dx, dy, dz] = info.dimensions;
   info.cache = yCache;
   info.pPolynomials = cache.data();
-  const auto heights = calculateHeight(info, {{0, 0}, {0,0.5}});
+  const auto heights = calculateHeight(info, {{0, 0}, {0, 0.25}});
   ASSERT_EQ(heights.size(), 2);
+  double height1 = 0;
+  double height2 = 0;
+  for (size_t x = 0; x < dx; x++) {
+    for (size_t y = 0; y < dy; y++) {
+      for (size_t z = 0; z < dz; z++) {
+        const auto a = cache[x + y * dx + z * dx * dy];
+        height1 += a * info.xFunc(0, x) * info.xFunc(0, y) * info.xFunc(0, z);
+        height2 +=
+            a * info.xFunc(0, x) * info.xFunc(0.25, y) * info.xFunc(0, z);
+      }
+    }
+  }
+  EXPECT_FLOAT_EQ(heights[0], height1);
+  EXPECT_FLOAT_EQ(heights[1], height2);
 
   ASSERT_NO_THROW(makeData(0, 4));
 }
