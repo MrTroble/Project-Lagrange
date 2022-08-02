@@ -3,6 +3,7 @@
 #include "../Module.hpp"
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace tge::graphics {
 
