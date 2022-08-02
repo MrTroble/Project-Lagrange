@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Material.hpp"
-#include "Error.hpp"
+#include "../Error.hpp"
 #include <string>
 #include <vector>
 

@@ -1,3 +1,4 @@
+#include "../application/util/Calculations.hpp"
 #include "../application/util/DataManager.hpp"
 #include <gtest/gtest.h>
 
@@ -49,4 +50,23 @@ TEST(data, prepare) {
   EXPECT_FLOAT_EQ(cache[0], -0.0476528);
   EXPECT_FLOAT_EQ(cache[6 * 6 * 6], -0.000207452);
   EXPECT_FLOAT_EQ(cache[6 * 6 * 6 + 1], -0.00489827);
+
+  CellEntry::reset();
+}
+
+TEST(maketest, sample1) {
+  ASSERT_NO_THROW(readData("testInput.txt"));
+  const auto &cells = CellEntry::cellsPerLayer[3];
+  ASSERT_EQ(cells.size(), 1);
+
+  const auto &cell = cells[0];
+  ASSERT_EQ(cell.polynomials.size(), 3*3*3);
+
+  const auto &locals = CellEntry::localPositions[3];
+  ASSERT_EQ(locals.size(), cells.size() * 3 * 3);
+
+  const auto &cache = CellEntry::polynomialHeightCache[3];
+  ASSERT_EQ(cache.size(), cells.size() * 3 * 3 * 3);
+
+  ASSERT_NO_THROW(makeData(0, 4));
 }
