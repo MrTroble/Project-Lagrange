@@ -13,7 +13,7 @@ constexpr auto maxInterpolate = 10;
 
 class TGAppGUI : public tge::gui::GUIModule {
 public:
-  float currentY = 0;
+  float currentY = 0.5;
   int interpolation = 4;
 
   void renderGUI() {

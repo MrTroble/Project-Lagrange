@@ -112,5 +112,7 @@ TEST(maketest, sample1) {
   EXPECT_FLOAT_EQ(heights[0], height1);
   EXPECT_FLOAT_EQ(heights[1], height2);
 
-  ASSERT_NO_THROW(makeData(0, 4));
+  ASSERT_NO_THROW(makeData(0.5, 4));
+  const auto& dataPerCell = CellEntry::cellDataPerLayer[3];
+  ASSERT_EQ(dataPerCell.size(), 3*3*4*4);
 }

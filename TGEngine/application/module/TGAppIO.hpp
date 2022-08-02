@@ -41,8 +41,8 @@ public:
 
   void mouseEvent(const tge::io::MouseEvent event) override {
     if ((event.pressed & 1) == 1) {
-      view = glm::lookAt(glm::vec3(0, 0, -1), glm::vec3(0, 0, 0),
-                         glm::vec3(0, 1, 0));
+      view = glm::lookAt(glm::vec3(0, 1, 0), glm::vec3(0, 0, 0),
+                         glm::vec3(0, 0, 1));
       total += (glm::vec2(event.x, event.y) - last) * 0.001f;
       rotation = glm::toMat4(glm::quat(total.x, 0, 1, 0) *
                              glm::quat(total.y, 1, 0, 0));
