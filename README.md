@@ -4,7 +4,7 @@
 
 ## Build Status
 
-![GitHub branch checks state](https://img.shields.io/github/checks-status/MrTroble/Project-Lagrange/master?style=for-the-badge)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/MrTroble/Project-Lagrange/CMake?style=for-the-badge)
 
 ## Libraries
 
