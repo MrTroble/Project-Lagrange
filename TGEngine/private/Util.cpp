@@ -17,7 +17,7 @@ std::vector<char> wholeFile(const fs::path &path) {
                              path.generic_string());
   }
   const size_t size = (size_t)inputstream.tellg();
-  inputstream.seekg(0, SEEK_SET);
+  inputstream.seekg(0, std::ios_base::beg);
   std::vector<char> fileData(size + 1);
   inputstream.read((char *)fileData.data(), size);
   fileData[size] = 0;
