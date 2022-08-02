@@ -144,8 +144,10 @@ inline void makeData(const float currentY, const int interpolationCount) {
   for (auto &c : CellEntry::cellDataPerLayer)
     c.clear();
   const auto yCaches = generateYCaches(currentY);
-  for (size_t i = 0; i < CellEntry::cellsPerLayer.size(); i++) {
+  for (size_t i = 1; i < CellEntry::cellsPerLayer.size(); i++) {
     const auto &cLayer = CellEntry::cellsPerLayer[i];
+    if (cLayer.empty())
+      continue;
     CalculationInfo calculationInfo{};
     calculationInfo.cache = yCaches[i];
     calculationInfo.dimensions = degreeFromLayer(i);

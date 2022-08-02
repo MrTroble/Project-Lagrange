@@ -83,4 +83,17 @@ TEST(maketest, sample1) {
   EXPECT_EQ(yCache2[0], 0);
   EXPECT_EQ(yCache2[1], 1);
   EXPECT_EQ(yCache2[2], 0);
+
+  CalculationInfo<> info;
+  info.xFunc = getFunction(3);
+  info.yFunc = getFunction(3);
+  std::function<double(double, int)> referenceFunc = PolynomialEntry<>::P2functions; 
+  EXPECT_STREQ(info.xFunc.target_type().raw_name(), referenceFunc.target_type().raw_name());
+  info.dimensions = degreeFromLayer(3);
+  info.cache = yCache;
+  info.pPolynomials = cache.data();
+  const auto heights = calculateHeight(info, {{0, 0}, {0,0.5}});
+  ASSERT_EQ(heights.size(), 2);
+
+  ASSERT_NO_THROW(makeData(0, 4));
 }
