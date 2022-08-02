@@ -71,4 +71,8 @@ TEST(maketest, sample1) {
   const auto &yCaches = generateYCaches(0);
   const auto &yCache = yCaches[3];
   ASSERT_EQ(yCache.size(), 3);
+
+  ASSERT_EQ(yCache[0], 1);
+  ASSERT_EQ(yCache[1], 0);
+  ASSERT_EQ(yCache[2], 0);
 }
