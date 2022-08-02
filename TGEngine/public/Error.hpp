@@ -1,5 +1,11 @@
 #pragma once
 
+#if _HAS_NODISCARD && !defined(_NODISCARD)
+#define _NODISCARD [[nodiscard]]
+#else
+#define _NODISCARD
+#endif
+
 namespace tge::main {
 
 enum class Error {
