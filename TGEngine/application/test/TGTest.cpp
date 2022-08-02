@@ -60,7 +60,7 @@ TEST(maketest, sample1) {
   ASSERT_EQ(cells.size(), 1);
 
   const auto &cell = cells[0];
-  ASSERT_EQ(cell.polynomials.size(), 3*3*3);
+  ASSERT_EQ(cell.polynomials.size(), 3 * 3 * 3);
 
   const auto &locals = CellEntry::localPositions[3];
   ASSERT_EQ(locals.size(), cells.size() * 3 * 3);
@@ -75,4 +75,11 @@ TEST(maketest, sample1) {
   ASSERT_EQ(yCache[0], 1);
   ASSERT_EQ(yCache[1], 0);
   ASSERT_EQ(yCache[2], 0);
+
+  const auto &yCaches2 = generateYCaches(0.5);
+  const auto &yCache2 = yCaches2[3];
+
+  ASSERT_EQ(yCache2[0], 0);
+  ASSERT_EQ(yCache2[1], 1);
+  ASSERT_EQ(yCache2[2], 0);
 }
