@@ -68,5 +68,8 @@ TEST(maketest, sample1) {
   const auto &cache = CellEntry::polynomialHeightCache[3];
   ASSERT_EQ(cache.size(), cells.size() * 3 * 3 * 3);
 
-  ASSERT_NO_THROW(makeData(0, 4));
+  const auto &yCaches = generateYCaches(0);
+  const auto &yCache = yCaches[3];
+  ASSERT_EQ(yCache.size(), 4);
+
 }

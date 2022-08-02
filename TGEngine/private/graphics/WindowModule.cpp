@@ -1,7 +1,7 @@
-#include "..\..\public\graphics\WindowModule.hpp"
+#include "../../public/graphics/WindowModule.hpp"
 #include <iostream>
 #include <string>
-#include "..\..\public\Util.hpp"
+#include "../../public\Util.hpp"
 
 #ifdef WIN32
 #include <Windows.h>
