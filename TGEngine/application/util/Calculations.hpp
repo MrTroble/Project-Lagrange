@@ -9,7 +9,7 @@
 
 template <class T = double>
 inline std::function<T(T, int)> getFunction(const size_t degree) {
-  switch (degree) {
+  switch (degree-1) {
   case 0:
     return &PolynomialEntry<T>::P0functions;
   case 1:
@@ -36,11 +36,11 @@ inline std::function<T(T, int)> getFunction(const size_t degree) {
 inline std::array<std::vector<double>, MAX_DEGREE>
 generateYCaches(const double y) {
   std::array<std::vector<double>, MAX_DEGREE> yCaches;
-  for (size_t i = 0; i < yCaches.size(); i++) {
+  for (size_t i = 1; i < yCaches.size(); i++) {
     std::vector<double> cache;
     cache.reserve(MAX_DEGREE + 1);
     const auto function = getFunction(i);
-    for (size_t id = 0; id <= i; id++) {
+    for (size_t id = 0; id < i; id++) {
       cache.push_back(function(y, id));
     }
     yCaches[i] = cache;
@@ -69,9 +69,9 @@ inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
   heights.reserve(positions.size());
   for (const auto position : positions) {
     T height{};
-    for (size_t x = 0; x <= dX; x++) {
-      for (size_t y = 0; y <= dY; y++) {
-        for (size_t z = 0; z <= dZ; z++) {
+    for (size_t x = 0; x < dX; x++) {
+      for (size_t y = 0; y < dY; y++) {
+        for (size_t z = 0; z < dZ; z++) {
           const auto alpha = *(polynomials + (z * dX * dY + y * dX + x));
           height +=
               alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
