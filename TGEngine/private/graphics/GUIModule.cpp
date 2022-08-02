@@ -3,10 +3,12 @@
 
 #include "../../public/TGEngine.hpp"
 #include "../../public/graphics/vulkan/VulkanModuleDef.hpp"
-#include <Windows.h>
 #include <backends/imgui_impl_vulkan.h>
+#ifdef WIN32
+#include <Windows.h>
 #include <backends/imgui_impl_win32.cpp>
 #include <backends/imgui_impl_win32.h>
+#endif
 #include <imgui.h>
 
 namespace tge::gui {
@@ -56,9 +58,11 @@ main::Error GUIModule::init() {
   (void)io;
   ImGui::StyleColorsDark();
   winModule->customFn.push_back((void *)ImGui_ImplWin32_WndProcHandler);
+#ifdef WIN32
   const bool winInit = ImGui_ImplWin32_Init(winModule->hWnd);
   if (!winInit)
     return main::Error::COULD_NOT_CREATE_WINDOW;
+#endif
 
   const auto vmod = (graphics::VulkanGraphicsModule *)api;
 
@@ -178,7 +182,9 @@ void GUIModule::destroy() {
     vmod->device.destroyFramebuffer(((Framebuffer *)framebuffer)[i]);
   }
   delete[](Framebuffer *) framebuffer;
+#ifdef WIN32
   ImGui_ImplWin32_Shutdown();
+#endif // WIN32
 }
 
 } // namespace tge::gui

@@ -72,14 +72,15 @@ TEST(maketest, sample1) {
   const auto &yCache = yCaches[3];
   ASSERT_EQ(yCache.size(), 3);
 
-  ASSERT_EQ(yCache[0], 1);
-  ASSERT_EQ(yCache[1], 0);
-  ASSERT_EQ(yCache[2], 0);
+  EXPECT_EQ(yCache[0], 1);
+  EXPECT_EQ(yCache[1], 0);
+  EXPECT_EQ(yCache[2], 0);
 
   const auto &yCaches2 = generateYCaches(0.5);
   const auto &yCache2 = yCaches2[3];
+  ASSERT_EQ(yCache2.size(), 3);
 
-  ASSERT_EQ(yCache2[0], 0);
-  ASSERT_EQ(yCache2[1], 1);
-  ASSERT_EQ(yCache2[2], 0);
+  EXPECT_EQ(yCache2[0], 0);
+  EXPECT_EQ(yCache2[1], 1);
+  EXPECT_EQ(yCache2[2], 0);
 }
