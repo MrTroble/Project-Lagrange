@@ -34,9 +34,19 @@ TEST(data, prepare) {
   ASSERT_EQ(cells.size(), 64);
   const auto &cell = cells[0];
   ASSERT_EQ(cell.polynomials.size(), 216);
-  ASSERT_EQ(cell.centerOfCell, glm::vec3(0.375, 0.625, 0.625));
-  ASSERT_EQ(cell.points[0], glm::vec3(0.5, 0.5, 0.5));
-  ASSERT_EQ(cell.polynomials[0], glm::vec4(0.5, 0.5, 0.5, 0.639095));
+  EXPECT_EQ(cell.centerOfCell, glm::vec3(0.375, 0.625, 0.625));
+  EXPECT_EQ(cell.points[0], glm::vec3(0.5, 0.5, 0.5));
+  EXPECT_EQ(cell.polynomials[0], glm::vec4(0.5, 0.5, 0.5, 0.639095));
 
   const auto &locals = CellEntry::localPositions[6];
+  ASSERT_EQ(locals.size(), cells.size() * 6 * 6);
+  EXPECT_EQ(locals[0], glm::vec2(-0.25, 0));
+  EXPECT_EQ(locals[36], glm::vec2(0, 0));
+  EXPECT_EQ(locals[37], glm::vec2(0.05, 0));
+
+  const auto &cache = CellEntry::polynomialHeightCache[6];
+  ASSERT_EQ(cache.size(), cells.size() * 6 * 6 * 6);
+  EXPECT_FLOAT_EQ(cache[0], -0.0476528);
+  EXPECT_FLOAT_EQ(cache[6 * 6 * 6], -0.000207452);
+  EXPECT_FLOAT_EQ(cache[6 * 6 * 6 + 1], -0.00489827);
 }
