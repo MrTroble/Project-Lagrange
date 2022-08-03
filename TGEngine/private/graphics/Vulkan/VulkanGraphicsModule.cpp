@@ -925,20 +925,21 @@ main::Error VulkanGraphicsModule::init() {
       SubpassDescription({}, PipelineBindPoint::eGraphics, inputAttachments,
                          colorAttachmentsSubpass1)};
 
-  const auto frag1 = PipelineStageFlagBits::eColorAttachmentOutput |
+  constexpr auto frag1 = PipelineStageFlagBits::eColorAttachmentOutput |
+                     PipelineStageFlagBits::eLateFragmentTests |
                      PipelineStageFlagBits::eEarlyFragmentTests;
 
-  const auto frag2 = AccessFlagBits::eColorAttachmentWrite |
+  constexpr auto frag2 = AccessFlagBits::eColorAttachmentWrite |
                      AccessFlagBits::eColorAttachmentRead |
                      AccessFlagBits::eDepthStencilAttachmentRead |
                      AccessFlagBits::eDepthStencilAttachmentWrite;
 
-  const auto frag3 = AccessFlagBits::eColorAttachmentWrite |
-                     AccessFlagBits::eColorAttachmentRead;
-
   const std::array subpassDependencies = {
       SubpassDependency(0, 1, frag1, frag1, frag2, frag2),
-      SubpassDependency(1, VK_SUBPASS_EXTERNAL, frag1, frag1, frag3, frag3)};
+      SubpassDependency(
+          1, VK_SUBPASS_EXTERNAL, PipelineStageFlagBits::eColorAttachmentOutput,
+          PipelineStageFlagBits::eColorAttachmentOutput,
+          AccessFlagBits::eColorAttachmentWrite, (AccessFlagBits)0)};
 
   const RenderPassCreateInfo renderPassCreateInfo(
       {}, attachments, subpassDescriptions, subpassDependencies);
