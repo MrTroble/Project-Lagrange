@@ -78,17 +78,11 @@ main::Error GUIModule::init() {
   const std::array subpassDescriptions = {SubpassDescription(
       {}, PipelineBindPoint::eGraphics, {}, colorAttachments)};
 
-  const std::array subpassDependencies = {
-      SubpassDependency(VK_SUBPASS_EXTERNAL, 0,
-                        PipelineStageFlagBits::eColorAttachmentOutput |
-                            PipelineStageFlagBits::eEarlyFragmentTests,
-                        PipelineStageFlagBits::eColorAttachmentOutput |
-                            PipelineStageFlagBits::eEarlyFragmentTests,
-                        (AccessFlagBits)0,
-                        AccessFlagBits::eColorAttachmentWrite |
-                            AccessFlagBits::eColorAttachmentRead |
-                            AccessFlagBits::eDepthStencilAttachmentRead |
-                            AccessFlagBits::eDepthStencilAttachmentWrite)};
+  const std::array subpassDependencies = {SubpassDependency(
+      VK_SUBPASS_EXTERNAL, 0, PipelineStageFlagBits::eColorAttachmentOutput,
+      PipelineStageFlagBits::eColorAttachmentOutput, (AccessFlagBits)0,
+      AccessFlagBits::eColorAttachmentWrite |
+          AccessFlagBits::eColorAttachmentRead)};
 
   const RenderPassCreateInfo renderPassCreateInfo(
       {}, attachments, subpassDescriptions, subpassDependencies);

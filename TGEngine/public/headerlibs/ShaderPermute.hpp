@@ -509,11 +509,9 @@ public:
       auto stringPtr = output.output;
       std::vector<const char *> cstrings;
       cstrings.resize(stringPtr.size());
-#ifdef DEBUG
       for (size_t i = 0; i < stringPtr.size(); i++) {
         cstrings[i] = stringPtr[i].c_str();
       }
-#endif
       const GlslSettings settings = input.settings.get<GlslSettings>();
       auto shader = new glslang::TShader(settings.shaderType);
       shader->setStrings(cstrings.data(), cstrings.size());
@@ -522,7 +520,7 @@ public:
       shader->setEnvClient(settings.targetClient, settings.targetVersion);
       shader->setEnvTarget(settings.targetLanguage,
                            settings.targetLanguageVersion);
-      if (!shader->parse(&defaultTBuiltInResource, 450, false,
+      if (!shader->parse(&defaultTBuiltInResource, 460, true,
                          EShMessages::EShMsgVulkanRules)) {
         return {{shader->getInfoLog()}, OutputType::ERROR};
       }
@@ -543,7 +541,8 @@ public:
       return {{"Could not parse glsl settings!", std::string(e.what())},
               OutputType::ERROR};
     }
-    return {};
+    return {{"Undefined error!"},
+            OutputType::ERROR};
   }
 };
 

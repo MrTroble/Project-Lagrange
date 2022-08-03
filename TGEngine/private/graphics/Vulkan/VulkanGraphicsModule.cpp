@@ -343,8 +343,8 @@ void VulkanGraphicsModule::changeData(const size_t bufferIndex,
   device.bindBufferMemory(intermBuffer, hostVisibleMemory, 0);
   const auto mappedHandle =
       device.mapMemory(hostVisibleMemory, 0, VK_WHOLE_SIZE);
-  glm::mat4 mat = *(glm::mat4*)data;
-  
+  glm::mat4 mat = *(glm::mat4 *)data;
+
   memcpy(mappedHandle, data, dataSizes);
 
   device.unmapMemory(hostVisibleMemory);
@@ -556,15 +556,14 @@ VkBool32 debugMessage(DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                       const DebugUtilsMessengerCallbackDataEXT *pCallbackData,
                       void *pUserData) {
   if (messageSeverity == DebugUtilsMessageSeverityFlagBitsEXT::eVerbose) {
-    return VK_TRUE;
+    return VK_FALSE;
   }
   std::string severity = to_string(messageSeverity);
   std::string type = to_string(messageTypes);
 
   printf("[%s][%s]: %s\n", severity.c_str(), type.c_str(),
          pCallbackData->pMessage);
-  return !(bool)(messageSeverity |
-                 DebugUtilsMessageSeverityFlagBitsEXT::eError);
+  return VK_FALSE;
 }
 #endif
 
@@ -934,9 +933,12 @@ main::Error VulkanGraphicsModule::init() {
                      AccessFlagBits::eDepthStencilAttachmentRead |
                      AccessFlagBits::eDepthStencilAttachmentWrite;
 
+  const auto frag3 = AccessFlagBits::eColorAttachmentWrite |
+                     AccessFlagBits::eColorAttachmentRead;
+
   const std::array subpassDependencies = {
       SubpassDependency(0, 1, frag1, frag1, frag2, frag2),
-      SubpassDependency(1, VK_SUBPASS_EXTERNAL, frag1, frag1, frag2, frag2)};
+      SubpassDependency(1, VK_SUBPASS_EXTERNAL, frag1, frag1, frag3, frag3)};
 
   const RenderPassCreateInfo renderPassCreateInfo(
       {}, attachments, subpassDescriptions, subpassDependencies);
@@ -953,6 +955,28 @@ main::Error VulkanGraphicsModule::init() {
   const CommandBufferAllocateInfo cmdBufferAllocInfo(
       pool, CommandBufferLevel::ePrimary, (uint32_t)swapchainImages.size() + 1);
   cmdbuffer = device.allocateCommandBuffers(cmdBufferAllocInfo);
+
+  const auto cmd = cmdbuffer.back();
+
+  const CommandBufferBeginInfo beginInfo(
+      CommandBufferUsageFlagBits::eOneTimeSubmit, {});
+  cmd.begin(beginInfo);
+
+  waitForImageTransition(cmd, ImageLayout::eUndefined,
+                         ImageLayout::eDepthAttachmentOptimal,
+                         textureImages[imageFirstIndex],
+                         {ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+
+  constexpr ImageSubresourceRange range = {ImageAspectFlagBits::eColor, 0, 1, 0,
+                                           1};
+  for (size_t i = imageFirstIndex + 1;
+       i < imageFirstIndex + intImageInfo.size(); i++) {
+    waitForImageTransition(cmd, ImageLayout::eUndefined,
+                           ImageLayout::eSharedPresentKHR, textureImages[i],
+                           range);
+  }
+  cmd.end();
+  submitAndWait(device, queue, cmd);
 #pragma endregion
 
 #pragma region ImageViews and Framebuffer

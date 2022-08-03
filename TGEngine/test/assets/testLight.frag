@@ -5,7 +5,8 @@
 	"codes": [
 		{
 			"code": [
-				"#version 460",
+				"#version 450",
+				"#extension GL_KHR_vulkan_glsl: enable",
 				"layout(location=0) in vec2 UV;",
 				"layout(location=0) out vec4 COLOR;",
 				"layout(location=1) out vec4 NORMAL;",
