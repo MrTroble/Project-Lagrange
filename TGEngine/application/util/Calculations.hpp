@@ -168,12 +168,15 @@ inline void makeData(const float currentY, const int interpolationCount) {
 
       const auto pivot = glm::vec2(cell.points[0]);
       std::vector<InterpolateInfo<>> interpolations;
-      interpolations.resize(dX * dY);
-      for (size_t x = 0; x < dX - 1; x++) {
-        for (size_t y = 0; y < dY - 1; y++) {
-          const auto local1 = locals[x + y * dX];
-          const auto local2 = locals[x + 1 + (y + 1) * dX];
-          interpolations[x + y * dX] = {local1, local2};
+      const auto partX = dX - 1;
+      const auto partY = dY - 1;
+      const auto setpX = partX;
+      interpolations.resize(partX * partY);
+      for (size_t x = 0; x < partX; x++) {
+        for (size_t y = 0; y < partY; y++) {
+          const auto local1 = locals[x + y * setpX];
+          const auto local2 = locals[x + 1 + (y + 1) * setpX];
+          interpolations[x + y * setpX] = {local1, local2};
         }
       }
       const auto positionsOut = interpolate(calculationInfo, interpolations,

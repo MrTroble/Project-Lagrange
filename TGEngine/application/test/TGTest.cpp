@@ -131,5 +131,5 @@ TEST(maketest, sample1) {
 
   ASSERT_NO_THROW(makeData(0.5, 4));
   const auto &dataPerCell = CellEntry::cellDataPerLayer[3];
-  ASSERT_EQ(dataPerCell.size(), 5 * 5 * 4 * 4);
+  ASSERT_EQ(dataPerCell.size(), 5 * 5 * 4 * 4 * cells.size());
 }
