@@ -113,8 +113,8 @@ interpolate(const CalculationInfo<T> &calculationInfo,
     const auto startIndex = i * points * points;
     for (size_t x = 0; x < parts; x++) {
       for (size_t y = 0; y < parts; y++) {
-        const auto first = x + y * parts + startIndex;
-        const auto nextY = x + (y + 1) * parts + startIndex + 1;
+        const auto first = x + y * points + startIndex;
+        const auto nextY = x + (y + 1) * points + startIndex;
         const auto position1 =
             glm::vec4(positions2D[first] + pivot, heights[first], 0);
         const auto position2 =

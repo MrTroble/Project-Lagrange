@@ -118,6 +118,11 @@ TEST(maketest, sample1) {
   EXPECT_EQ(glm::vec2(interp[2]), glm::vec2(0.05, 0.05));
   EXPECT_EQ(glm::vec2(interp[3]), glm::vec2(0, 0.05));
 
+  EXPECT_EQ(glm::vec2(interp[4]), glm::vec2(0, 0.05));
+  EXPECT_EQ(glm::vec2(interp[5]), glm::vec2(0.05, 0.05));
+  EXPECT_EQ(glm::vec2(interp[6]), glm::vec2(0.05, 0.1));
+  EXPECT_EQ(glm::vec2(interp[7]), glm::vec2(0, 0.1));
+
   ASSERT_NO_THROW(makeData(0.5, 4));
   const auto &dataPerCell = CellEntry::cellDataPerLayer[3];
   ASSERT_EQ(dataPerCell.size(), 5 * 5 * 4 * 4);
