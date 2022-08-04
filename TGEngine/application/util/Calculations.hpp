@@ -9,7 +9,7 @@
 
 template <class T = double>
 inline std::function<T(T, int)> getFunction(const size_t degree) {
-  switch (degree-1) {
+  switch (degree - 1) {
   case 0:
     return &PolynomialEntry<T>::P0functions;
   case 1:
@@ -33,19 +33,14 @@ inline std::function<T(T, int)> getFunction(const size_t degree) {
   }
 }
 
-inline std::array<std::vector<double>, MAX_DEGREE>
-generateYCaches(const double y) {
-  std::array<std::vector<double>, MAX_DEGREE> yCaches;
-  for (size_t i = 1; i < yCaches.size(); i++) {
-    std::vector<double> cache;
-    cache.reserve(MAX_DEGREE + 1);
-    const auto function = getFunction(i);
-    for (size_t id = 0; id < i; id++) {
-      cache.push_back(function(y, id));
-    }
-    yCaches[i] = cache;
+inline std::vector<double> generateYCaches(const double y, const size_t i) {
+  std::vector<double> cache;
+  cache.reserve(MAX_DEGREE + 1);
+  const auto function = getFunction(i);
+  for (size_t id = 0; id < i; id++) {
+    cache.push_back(function(y, id));
   }
-  return yCaches;
+  return cache;
 }
 
 template <class T = double> struct CalculationInfo {
@@ -143,13 +138,11 @@ inline void makeData(const float currentY, const int interpolationCount) {
   std::numeric_limits<double> flim;
   for (auto &c : CellEntry::cellDataPerLayer)
     c.clear();
-  const auto yCaches = generateYCaches(currentY);
   for (size_t i = 1; i < CellEntry::cellsPerLayer.size(); i++) {
     const auto &cLayer = CellEntry::cellsPerLayer[i];
     if (cLayer.empty())
       continue;
     CalculationInfo calculationInfo{};
-    calculationInfo.cache = yCaches[i];
     calculationInfo.dimensions = degreeFromLayer(i);
     const auto [dX, dY, dZ] = calculationInfo.dimensions;
     calculationInfo.xFunc = getFunction(dX);
@@ -159,7 +152,6 @@ inline void makeData(const float currentY, const int interpolationCount) {
     const auto &locals = CellEntry::localPositions[i];
     auto &cellData = CellEntry::cellDataPerLayer[i];
     for (size_t c = 0; c < cLayer.size(); c++) {
-      calculationInfo.pPolynomials = cache.data() + countPerCell * c;
       auto maxY = flim.min();
       auto minY = flim.max();
       const auto &cell = cLayer[c];
@@ -170,6 +162,10 @@ inline void makeData(const float currentY, const int interpolationCount) {
       }
       if (!(maxY >= currentY && currentY >= minY))
         continue;
+      const auto localY = (currentY - minY) / (maxY - minY);
+      calculationInfo.cache = generateYCaches(localY, i);
+      calculationInfo.pPolynomials = cache.data() + countPerCell * c;
+
       const auto pivot = glm::vec2(cell.points[0]);
       std::vector<InterpolateInfo<>> interpolations;
       interpolations.resize(dX * dY);

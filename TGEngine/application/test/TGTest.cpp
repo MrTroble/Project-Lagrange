@@ -68,16 +68,14 @@ TEST(maketest, sample1) {
   const auto &cache = CellEntry::polynomialHeightCache[3];
   ASSERT_EQ(cache.size(), cells.size() * 3 * 3 * 3);
 
-  const auto &yCaches = generateYCaches(0);
-  const auto &yCache = yCaches[3];
+  const auto &yCache = generateYCaches(0, 3);
   ASSERT_EQ(yCache.size(), 3);
 
   EXPECT_EQ(yCache[0], 1);
   EXPECT_EQ(yCache[1], 0);
   EXPECT_EQ(yCache[2], 0);
 
-  const auto &yCaches2 = generateYCaches(0.5);
-  const auto &yCache2 = yCaches2[3];
+  const auto &yCache2 = generateYCaches(0.5, 3);
   ASSERT_EQ(yCache2.size(), 3);
 
   EXPECT_EQ(yCache2[0], 0);
@@ -112,7 +110,11 @@ TEST(maketest, sample1) {
   EXPECT_FLOAT_EQ(heights[0], height1);
   EXPECT_FLOAT_EQ(heights[1], height2);
 
+  std::vector<InterpolateInfo<>> interpolation = {{{0, 0}, {0.25, 0.25}}};
+  const auto interp = interpolate(info, interpolation, cell.points[0], 4);
+  ASSERT_EQ(interp.size(), 6 * 6);
+
   ASSERT_NO_THROW(makeData(0.5, 4));
-  const auto& dataPerCell = CellEntry::cellDataPerLayer[3];
-  ASSERT_EQ(dataPerCell.size(), 3*3*4*4);
+  const auto &dataPerCell = CellEntry::cellDataPerLayer[3];
+  ASSERT_EQ(dataPerCell.size(), 3 * 3 * 4 * 4);
 }

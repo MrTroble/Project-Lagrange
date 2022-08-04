@@ -14,7 +14,7 @@ public:
   glm::mat4 view = glm::mat4(1);
   glm::vec2 total;
   glm::mat4 projectionMatrix =
-      glm::perspective(glm::radians(75.0f), 1.0f, 0.001f, 1000.0f);
+      glm::perspective(glm::radians(45.0f), 1.0f, 0.00001f, 10000.0f);
   uint32_t binding = UINT32_MAX;
   tge::graphics::APILayer *api;
   glm::vec2 last;
@@ -34,9 +34,8 @@ public:
   void calculateMatrix() {
     view = glm::lookAt(glm::vec3(0, 0, -1), glm::vec3(0, 0, 0),
                        glm::vec3(0, 1, 0));
-
-    mvpMatrix = (glm::translate(translation) * glm::scale(scale) * rotation) *
-                view * projectionMatrix;
+    mvpMatrix = projectionMatrix * view *
+                (glm::translate(translation) * rotation * glm::scale(scale));
   }
 
   void sendChanges() {
