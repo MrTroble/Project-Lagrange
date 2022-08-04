@@ -48,7 +48,7 @@ template <class T = double> struct CalculationInfo {
   std::function<T(T, int)> yFunc;
   std::vector<double> cache;
   std::tuple<size_t, size_t, size_t> dimensions;
-  const T *pPolynomials;
+  const T *pPolynomials = nullptr;
 };
 
 template <class T = double>
@@ -59,6 +59,8 @@ inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
   const auto &cache = calculationInfo.cache;
   const auto [dX, dY, dZ] = calculationInfo.dimensions;
   const auto polynomials = calculationInfo.pPolynomials;
+  if (polynomials == nullptr)
+    throw std::runtime_error("no polynomials given!");
 
   std::vector<T> heights;
   heights.reserve(positions.size());

@@ -54,6 +54,116 @@ TEST(data, prepare) {
   CellEntry::reset();
 }
 
+TEST(maketest, ycache) {
+  const auto &yCache = generateYCaches(0, 3);
+  ASSERT_EQ(yCache.size(), 3);
+
+  EXPECT_EQ(yCache[0], 1);
+  EXPECT_EQ(yCache[1], 0);
+  EXPECT_EQ(yCache[2], 0);
+
+  const auto &yCache2 = generateYCaches(0.5, 3);
+  ASSERT_EQ(yCache2.size(), 3);
+
+  EXPECT_EQ(yCache2[0], 0);
+  EXPECT_EQ(yCache2[1], 1);
+  EXPECT_EQ(yCache2[2], 0);
+}
+
+TEST(maketest, interpolateTest) {
+  CalculationInfo<> info;
+  info.xFunc = getFunction(3);
+  info.yFunc = getFunction(3);
+  info.dimensions = degreeFromLayer(3);
+  info.cache = generateYCaches(0, 3);
+  std::array<double, 3 * 3 * 3> m;
+  info.pPolynomials = m.data();
+
+  std::vector<InterpolateInfo<>> interpolation = {{{0, 0}, {0.25, 0.25}}};
+  const auto interp = interpolate(info, interpolation, glm::vec2(0, 0), 4);
+  ASSERT_EQ(interp.size(), 5 * 5 * 4);
+  EXPECT_EQ(glm::vec2(interp[0]), glm::vec2(0, 0));
+  EXPECT_EQ(glm::vec2(interp[1]), glm::vec2(0.05, 0));
+  EXPECT_EQ(glm::vec2(interp[2]), glm::vec2(0.05, 0.05));
+  EXPECT_EQ(glm::vec2(interp[3]), glm::vec2(0, 0.05));
+
+  EXPECT_EQ(glm::vec2(interp[4]), glm::vec2(0, 0.05));
+  EXPECT_EQ(glm::vec2(interp[5]), glm::vec2(0.05, 0.05));
+  EXPECT_EQ(glm::vec2(interp[6]), glm::vec2(0.05, 0.1));
+  EXPECT_EQ(glm::vec2(interp[7]), glm::vec2(0, 0.1));
+
+  constexpr auto offset = 5 * 4;
+  EXPECT_EQ(glm::vec2(interp[offset]), glm::vec2(0.05, 0));
+  EXPECT_EQ(glm::vec2(interp[offset + 1]), glm::vec2(0.1, 0));
+  EXPECT_EQ(glm::vec2(interp[offset + 2]), glm::vec2(0.1, 0.05));
+  EXPECT_EQ(glm::vec2(interp[offset + 3]), glm::vec2(0.05, 0.05));
+}
+
+TEST(maketest, interpolateTestMultiple) {
+  CalculationInfo<> info;
+  info.xFunc = getFunction(3);
+  info.yFunc = getFunction(3);
+  info.dimensions = degreeFromLayer(3);
+  info.cache = generateYCaches(0, 3);
+  std::array<double, 3 * 3 * 3> m;
+  info.pPolynomials = m.data();
+
+  std::vector<InterpolateInfo<>> interpolation = {{{0, 0}, {0.25, 0.25}},
+                                                  {{0, 1}, {0.25, 1.25}}};
+  const auto interp = interpolate(info, interpolation, glm::vec2(0, 0), 4);
+  ASSERT_EQ(interp.size(), 5 * 5 * 4 * interpolation.size());
+  EXPECT_EQ(glm::vec2(interp[0]), glm::vec2(0, 0));
+  EXPECT_EQ(glm::vec2(interp[1]), glm::vec2(0.05, 0));
+  EXPECT_EQ(glm::vec2(interp[2]), glm::vec2(0.05, 0.05));
+  EXPECT_EQ(glm::vec2(interp[3]), glm::vec2(0, 0.05));
+
+  EXPECT_EQ(glm::vec2(interp[4]), glm::vec2(0, 0.05));
+  EXPECT_EQ(glm::vec2(interp[5]), glm::vec2(0.05, 0.05));
+  EXPECT_EQ(glm::vec2(interp[6]), glm::vec2(0.05, 0.1));
+  EXPECT_EQ(glm::vec2(interp[7]), glm::vec2(0, 0.1));
+
+  constexpr auto offset = 5 * 4;
+  EXPECT_EQ(glm::vec2(interp[offset]), glm::vec2(0.05, 0));
+  EXPECT_EQ(glm::vec2(interp[offset + 1]), glm::vec2(0.1, 0));
+  EXPECT_EQ(glm::vec2(interp[offset + 2]), glm::vec2(0.1, 0.05));
+  EXPECT_EQ(glm::vec2(interp[offset + 3]), glm::vec2(0.05, 0.05));
+
+  constexpr auto offset2 = 5 * 4 * 5;
+  EXPECT_EQ(glm::vec2(interp[offset2]), glm::vec2(0, 1));
+  EXPECT_EQ(glm::vec2(interp[offset2 + 1]), glm::vec2(0.05, 1));
+  EXPECT_EQ(glm::vec2(interp[offset2 + 2]), glm::vec2(0.05, 1.05));
+  EXPECT_EQ(glm::vec2(interp[offset2 + 3]), glm::vec2(0, 1.05));
+}
+
+TEST(maketest, interpolatePivotTest) {
+  CalculationInfo<> info;
+  info.xFunc = getFunction(3);
+  info.yFunc = getFunction(3);
+  info.dimensions = degreeFromLayer(3);
+  info.cache = generateYCaches(0, 3);
+  std::array<double, 3 * 3 * 3> m;
+  info.pPolynomials = m.data();
+
+  std::vector<InterpolateInfo<>> interpolation = {{{0, 0}, {0.25, 0.25}}};
+  const auto interp = interpolate(info, interpolation, glm::vec2(1, 1), 4);
+  ASSERT_EQ(interp.size(), 5 * 5 * 4);
+  EXPECT_EQ(glm::vec2(interp[0]), glm::vec2(1, 1));
+  EXPECT_EQ(glm::vec2(interp[1]), glm::vec2(1.05, 1));
+  EXPECT_EQ(glm::vec2(interp[2]), glm::vec2(1.05, 1.05));
+  EXPECT_EQ(glm::vec2(interp[3]), glm::vec2(1, 1.05));
+
+  EXPECT_EQ(glm::vec2(interp[4]), glm::vec2(1, 1.05));
+  EXPECT_EQ(glm::vec2(interp[5]), glm::vec2(1.05, 1.05));
+  EXPECT_EQ(glm::vec2(interp[6]), glm::vec2(1.05, 1.1));
+  EXPECT_EQ(glm::vec2(interp[7]), glm::vec2(1, 1.1));
+
+  constexpr auto offset = 5 * 4;
+  EXPECT_EQ(glm::vec2(interp[offset]), glm::vec2(1.05, 1));
+  EXPECT_EQ(glm::vec2(interp[offset + 1]), glm::vec2(1.1, 1));
+  EXPECT_EQ(glm::vec2(interp[offset + 2]), glm::vec2(1.1, 1.05));
+  EXPECT_EQ(glm::vec2(interp[offset + 3]), glm::vec2(1.05, 1.05));
+}
+
 TEST(maketest, sample1) {
   ASSERT_NO_THROW(readData("testInput.txt"));
   const auto &cells = CellEntry::cellsPerLayer[3];
@@ -70,17 +180,6 @@ TEST(maketest, sample1) {
 
   const auto &yCache = generateYCaches(0, 3);
   ASSERT_EQ(yCache.size(), 3);
-
-  EXPECT_EQ(yCache[0], 1);
-  EXPECT_EQ(yCache[1], 0);
-  EXPECT_EQ(yCache[2], 0);
-
-  const auto &yCache2 = generateYCaches(0.5, 3);
-  ASSERT_EQ(yCache2.size(), 3);
-
-  EXPECT_EQ(yCache2[0], 0);
-  EXPECT_EQ(yCache2[1], 1);
-  EXPECT_EQ(yCache2[2], 0);
 
   CalculationInfo<> info;
   info.xFunc = getFunction(3);
@@ -109,25 +208,6 @@ TEST(maketest, sample1) {
   }
   EXPECT_FLOAT_EQ(heights[0], height1);
   EXPECT_FLOAT_EQ(heights[1], height2);
-
-  std::vector<InterpolateInfo<>> interpolation = {{{0, 0}, {0.25, 0.25}}};
-  const auto interp = interpolate(info, interpolation, glm::vec2(0, 0), 4);
-  ASSERT_EQ(interp.size(), 5 * 5 * 4);
-  EXPECT_EQ(glm::vec2(interp[0]), glm::vec2(0, 0));
-  EXPECT_EQ(glm::vec2(interp[1]), glm::vec2(0.05, 0));
-  EXPECT_EQ(glm::vec2(interp[2]), glm::vec2(0.05, 0.05));
-  EXPECT_EQ(glm::vec2(interp[3]), glm::vec2(0, 0.05));
-
-  EXPECT_EQ(glm::vec2(interp[4]), glm::vec2(0, 0.05));
-  EXPECT_EQ(glm::vec2(interp[5]), glm::vec2(0.05, 0.05));
-  EXPECT_EQ(glm::vec2(interp[6]), glm::vec2(0.05, 0.1));
-  EXPECT_EQ(glm::vec2(interp[7]), glm::vec2(0, 0.1));
-
-  constexpr auto offset = 5 * 4;
-  EXPECT_EQ(glm::vec2(interp[offset]), glm::vec2(0.05, 0));
-  EXPECT_EQ(glm::vec2(interp[offset + 1]), glm::vec2(0.1, 0));
-  EXPECT_EQ(glm::vec2(interp[offset + 2]), glm::vec2(0.1, 0.05));
-  EXPECT_EQ(glm::vec2(interp[offset + 3]), glm::vec2(0.05, 0.05));
 
   ASSERT_NO_THROW(makeData(0.5, 4));
   const auto &dataPerCell = CellEntry::cellDataPerLayer[3];
