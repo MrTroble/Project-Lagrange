@@ -118,14 +118,14 @@ interpolate(const CalculationInfo<T> &calculationInfo,
         const auto first = x + y * points + startIndex;
         const auto nextY = x + (y + 1) * points + startIndex;
         const auto position1 =
-            glm::vec4(positions2D[first] + pivot, heights[first], 0);
+            glm::vec4(positions2D[first] + pivot, heights[first], 1);
         const auto position2 =
-            glm::vec4(positions2D[first + 1] + pivot, heights[first + 1], 0);
+            glm::vec4(positions2D[first + 1] + pivot, heights[first + 1], 1);
 
         const auto position3 =
-            glm::vec4(positions2D[nextY + 1] + pivot, heights[nextY + 1], 0);
+            glm::vec4(positions2D[nextY + 1] + pivot, heights[nextY + 1], 1);
         const auto position4 =
-            glm::vec4(positions2D[nextY] + pivot, heights[nextY], 0);
+            glm::vec4(positions2D[nextY] + pivot, heights[nextY], 1);
         positions.push_back(position1);
         positions.push_back(position2);
         positions.push_back(position3);
@@ -172,13 +172,14 @@ inline void makeData(const float currentY, const int interpolationCount) {
       std::vector<InterpolateInfo<>> interpolations;
       const auto partX = dX - 1;
       const auto partY = dY - 1;
-      const auto setpX = partX;
+      const auto setpX = partX + 1;
       interpolations.resize(partX * partY);
       for (size_t x = 0; x < partX; x++) {
         for (size_t y = 0; y < partY; y++) {
-          const auto local1 = locals[x + y * setpX];
+          const auto offset = x + y * setpX;
+          const auto local1 = locals[offset];
           const auto local2 = locals[x + 1 + (y + 1) * setpX];
-          interpolations[x + y * setpX] = {local1, local2};
+          interpolations[x + y * partX] = {local1, local2};
         }
       }
       const auto positionsOut = interpolate(calculationInfo, interpolations,

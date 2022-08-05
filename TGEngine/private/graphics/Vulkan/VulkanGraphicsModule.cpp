@@ -926,13 +926,13 @@ main::Error VulkanGraphicsModule::init() {
                          colorAttachmentsSubpass1)};
 
   constexpr auto frag1 = PipelineStageFlagBits::eColorAttachmentOutput |
-                     PipelineStageFlagBits::eLateFragmentTests |
-                     PipelineStageFlagBits::eEarlyFragmentTests;
+                         PipelineStageFlagBits::eLateFragmentTests |
+                         PipelineStageFlagBits::eEarlyFragmentTests;
 
   constexpr auto frag2 = AccessFlagBits::eColorAttachmentWrite |
-                     AccessFlagBits::eColorAttachmentRead |
-                     AccessFlagBits::eDepthStencilAttachmentRead |
-                     AccessFlagBits::eDepthStencilAttachmentWrite;
+                         AccessFlagBits::eColorAttachmentRead |
+                         AccessFlagBits::eDepthStencilAttachmentRead |
+                         AccessFlagBits::eDepthStencilAttachmentWrite;
 
   const std::array subpassDependencies = {
       SubpassDependency(0, 1, frag1, frag1, frag2, frag2),
@@ -963,9 +963,8 @@ main::Error VulkanGraphicsModule::init() {
       CommandBufferUsageFlagBits::eOneTimeSubmit, {});
   cmd.begin(beginInfo);
 
-  waitForImageTransition(cmd, ImageLayout::eUndefined,
-                         ImageLayout::eDepthAttachmentOptimal,
-                         textureImages[imageFirstIndex],
+  waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
+                         textureImages[depthImage],
                          {ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
 
   constexpr ImageSubresourceRange range = {ImageAspectFlagBits::eColor, 0, 1, 0,
@@ -976,6 +975,12 @@ main::Error VulkanGraphicsModule::init() {
                            ImageLayout::eSharedPresentKHR, textureImages[i],
                            range);
   }
+
+  for (const auto &image : swapchainImages) {
+    waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
+                           image, range);
+  }
+
   cmd.end();
   submitAndWait(device, queue, cmd);
 #pragma endregion
@@ -1062,6 +1067,11 @@ void VulkanGraphicsModule::tick(double time) {
     currentBuffer.draw(3, 1, 0, 0);
 
     currentBuffer.endRenderPass();
+
+    waitForImageTransition(currentBuffer, ImageLayout::eUndefined,
+                           ImageLayout::eGeneral, textureImages[depthImage],
+                           {ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+
     currentBuffer.end();
   }
 
