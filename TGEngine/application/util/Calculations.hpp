@@ -5,6 +5,7 @@
 #include <array>
 #include <functional>
 #include <glm/glm.hpp>
+#include <unordered_set>
 #include <vector>
 
 template <class T = double>
@@ -37,8 +38,9 @@ inline std::vector<double> generateYCaches(const double y, const size_t i) {
   std::vector<double> cache;
   cache.reserve(MAX_DEGREE + 1);
   const auto function = getFunction(i);
+  const auto absY = std::abs(y);
   for (size_t id = 0; id < i; id++) {
-    cache.push_back(function(y, id));
+    cache.push_back(function(absY, id));
   }
   return cache;
 }
@@ -65,13 +67,14 @@ inline std::vector<T> calculateHeight(const CalculationInfo<T> &calculationInfo,
   std::vector<T> heights;
   heights.reserve(positions.size());
   for (const auto position : positions) {
+    const auto absPosition = glm::abs(position);
     T height{};
     for (size_t x = 0; x < dX; x++) {
       for (size_t y = 0; y < dY; y++) {
         for (size_t z = 0; z < dZ; z++) {
           const auto alpha = *(polynomials + (z * dX * dY + y * dX + x));
-          height +=
-              alpha * xFunc(position.x, x) * yFunc(position.y, y) * cache[z];
+          height += alpha * xFunc(absPosition.x, x) * yFunc(absPosition.y, y) *
+                    cache[z];
         }
       }
     }
@@ -111,7 +114,6 @@ interpolate(const CalculationInfo<T> &calculationInfo,
   const auto heights = calculateHeight<T>(calculationInfo, positions2D);
   positions.reserve(parts * parts * 4 * interpolations.size());
   for (size_t i = 0; i < interpolations.size(); i++) {
-    const auto interpolate = interpolations[i];
     const auto startIndex = i * points * points;
     for (size_t x = 0; x < parts; x++) {
       for (size_t y = 0; y < parts; y++) {
@@ -126,15 +128,35 @@ interpolate(const CalculationInfo<T> &calculationInfo,
             glm::vec4(positions2D[nextY + 1] + pivot, heights[nextY + 1], 1);
         const auto position4 =
             glm::vec4(positions2D[nextY] + pivot, heights[nextY], 1);
-        positions.push_back(position1);
-        positions.push_back(position2);
-        positions.push_back(position3);
         positions.push_back(position4);
+        positions.push_back(position3);
+        positions.push_back(position2);
+        positions.push_back(position1);
       }
     }
   }
   return positions;
 }
+
+#ifdef DEBUG
+namespace std {
+template <> struct hash<InterpolateInfo<>> {
+  _NODISCARD size_t operator()(const InterpolateInfo<> &key) const noexcept {
+    const auto h1 = std::hash<double>{}(key.point1.x);
+    const auto h2 = std::hash<double>{}(key.point1.y);
+    const auto h3 = std::hash<double>{}(key.point2.x);
+    const auto h4 = std::hash<double>{}(key.point2.y);
+    return ((h1 ^ (h2 << 1)) ^ (h3 << 1)) ^ (h4 << 1);
+  }
+};
+template <> struct equal_to<InterpolateInfo<>> {
+  _NODISCARD bool operator()(const InterpolateInfo<> &key1,
+                             const InterpolateInfo<> &key2) const noexcept {
+    return key1.point1 == key2.point1 && key1.point2 == key2.point2;
+  }
+};
+} // namespace std
+#endif
 
 inline void makeData(const float currentY, const int interpolationCount) {
   std::numeric_limits<double> flim;
@@ -153,6 +175,9 @@ inline void makeData(const float currentY, const int interpolationCount) {
     const auto &cache = CellEntry::polynomialHeightCache[i];
     const auto &locals = CellEntry::localPositions[i];
     auto &cellData = CellEntry::cellDataPerLayer[i];
+#ifdef DEBUG
+    std::unordered_set<InterpolateInfo<>> unorderedSet;
+#endif // DEBUG
     for (size_t c = 0; c < cLayer.size(); c++) {
       auto maxY = flim.min();
       auto minY = flim.max();
@@ -174,14 +199,25 @@ inline void makeData(const float currentY, const int interpolationCount) {
       const auto partY = dY - 1;
       const auto setpX = partX + 1;
       interpolations.resize(partX * partY);
+      const auto cellOffset = c * dX * dY;
       for (size_t x = 0; x < partX; x++) {
         for (size_t y = 0; y < partY; y++) {
-          const auto offset = x + y * setpX;
+          const auto offset = x + y * setpX + cellOffset;
+          const auto nextOffset = x + 1 + (y + 1) * setpX + cellOffset;
           const auto local1 = locals[offset];
-          const auto local2 = locals[x + 1 + (y + 1) * setpX];
+          const auto local2 = locals[nextOffset];
           interpolations[x + y * partX] = {local1, local2};
         }
       }
+#ifdef DEBUG
+      for (const auto &info : interpolations) {
+        if (unorderedSet.contains(info)) {
+          printf("C: %d\n", c);
+        }
+      }
+      unorderedSet.insert(begin(interpolations), end(interpolations));
+#endif // DEBUG
+
       const auto positionsOut = interpolate(calculationInfo, interpolations,
                                             pivot, interpolationCount);
       const auto start = cellData.size();

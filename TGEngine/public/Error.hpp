@@ -6,6 +6,19 @@
 #define _NODISCARD
 #endif
 
+constexpr auto forceSemicolon = 0;
+
+#ifdef DEBUG
+#define TGE_EXPECT(statement, message, rv)                                         \
+  if (!(statement)) {                                                          \
+    printf(message);                                                           \
+    return rv;                                                                 \
+  }                                                                            \
+  forceSemicolon
+#else
+#define TGE_EXPECT(statement, message, rv) forceSemicolon
+#endif // DEBUG
+
 namespace tge::main {
 
 enum class Error {

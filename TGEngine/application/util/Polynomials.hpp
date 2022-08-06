@@ -1,11 +1,14 @@
 #pragma once
 
 #include <stdexcept>
+#include <Error.hpp>
 #define THROW(x) throw std::runtime_error(x);
+#define RANGE_CHECK(x) TGE_EXPECT(x <= 1.0 && x >= 0.0, "Input not in range!", 0)
 
 template <typename T = double> class PolynomialEntry {
 public:
   static T P0functions(T x, int i) {
+    RANGE_CHECK(x);
     if (i == 0)
       return T(1.0);
     else
@@ -13,6 +16,7 @@ public:
   }
 
   static T P0Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     if (i == 0)
       return T(0.0);
     else
@@ -20,6 +24,7 @@ public:
   }
 
   static T P1functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return 1 - x;
@@ -31,6 +36,7 @@ public:
   }
 
   static T P1Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return T(-1.0);
@@ -42,6 +48,7 @@ public:
   }
 
   static T P2functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return (2 * x - 1) * (x - 1);
@@ -55,6 +62,7 @@ public:
   }
 
   static T P2Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return 4 * x - 3;
@@ -68,6 +76,7 @@ public:
   }
 
   static T P3functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return -1 / T(2.0) * (3 * x - 1) * (3 * x - 2) * (x - 1);
@@ -83,6 +92,7 @@ public:
   }
 
   static T P3Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return -27 / T(2.0) * x * x + 18 * x - 11 / T(2.0);
@@ -98,6 +108,7 @@ public:
   }
 
   static T P4functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return 1 / T(6.0) * (4 * x - 1) * (4 * x - 2) * (4 * x - 3) * (x - 1);
@@ -115,6 +126,7 @@ public:
   }
 
   static T P4Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     T x2 = x * x;
     T x3 = x2 * x;
     switch (i) {
@@ -134,6 +146,7 @@ public:
   }
 
   static T P5functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return -1.0 / T(24.0) * (x - 1) * (5 * x - 4) * (5 * x - 3) *
@@ -159,6 +172,7 @@ public:
   }
 
   static T P5Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -182,6 +196,7 @@ public:
   }
 
   static T P6functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return 1.0 / T(10.0) * (x - 1) * (2 * x - 1) * (3 * x - 2) * (3 * x - 1) *
@@ -210,6 +225,7 @@ public:
   }
 
   static T P6Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -241,6 +257,7 @@ public:
   }
 
   static T P7functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return -1.0 / T(720.0) * (x - 1) * (7 * x - 6) * (7 * x - 5) *
@@ -272,6 +289,7 @@ public:
   }
 
   static T P7Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;
@@ -316,6 +334,7 @@ public:
   }
 
   static T P8functions(T x, int i) {
+    RANGE_CHECK(x);
     switch (i) {
     case 0:
       return 1.0 / T(315.0) * (x - 1) * (2 * x - 1) * (4 * x - 3) *
@@ -351,6 +370,7 @@ public:
   }
 
   static T P8Dfunctions(T x, int i) {
+    RANGE_CHECK(x);
     T x2 = x * x;
     T x3 = x2 * x;
     T x4 = x2 * x2;

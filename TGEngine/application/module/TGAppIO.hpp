@@ -32,7 +32,7 @@ public:
   }
 
   void calculateMatrix() {
-    view = glm::lookAt(glm::vec3(0, 0, -1), glm::vec3(0, 0, 0),
+    view = glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(0, 0, 0),
                        glm::vec3(0, 1, 0));
     mvpMatrix = projectionMatrix * view *
                 (glm::translate(translation) * rotation * glm::scale(scale));
@@ -57,7 +57,6 @@ public:
     dState = false;
     eState = false;
     qState = false;
-    printf("Vec(%lf, %lf, %lf)\n", translation.x, translation.y, translation.z);
     calculateMatrix();
     sendChanges();
   }
