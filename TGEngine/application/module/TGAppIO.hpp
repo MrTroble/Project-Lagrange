@@ -2,7 +2,7 @@
 
 #include "../util/Calculations.hpp"
 #include <IO/IOModule.hpp>
-#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 #include <graphics/GameGraphicsModule.hpp>
 
 class TGAppIO : public tge::io::IOModule {
@@ -17,7 +17,7 @@ public:
       glm::perspective(glm::radians(45.0f), 1.0f, 0.00001f, 10000.0f);
   uint32_t binding = UINT32_MAX;
   tge::graphics::APILayer *api;
-  glm::vec2 last;
+  glm::vec2 last = glm::vec2(-1, -1);
 
   bool wState;
   bool sState;
@@ -32,8 +32,8 @@ public:
   }
 
   void calculateMatrix() {
-    view = glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(0, 0, 0),
-                       glm::vec3(0, 1, 0));
+    view =
+        glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
     mvpMatrix = projectionMatrix * view *
                 (glm::translate(translation) * rotation * glm::scale(scale));
   }
@@ -64,6 +64,8 @@ public:
   void mouseEvent(const tge::io::MouseEvent event) override {
     if ((event.pressed & 1) == 1) {
       total += (glm::vec2(event.x, event.y) - last) * 0.001f;
+      total = glm::clamp(total, glm::vec2(-7, -7), glm::vec2(7, 7));
+      printf("(%f, %f)\n", total.x, total.y);
       rotation = glm::toMat4(glm::quat(total.x, 0, 1, 0) *
                              glm::quat(total.y, 1, 0, 0));
     } else if (event.pressed == tge::io::SCROLL) {

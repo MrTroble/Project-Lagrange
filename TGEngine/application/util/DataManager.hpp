@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CellEntry.hpp"
 #include <array>
 #include <cmath>

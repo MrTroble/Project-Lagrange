@@ -158,13 +158,17 @@ size_t VulkanGraphicsModule::pushMaterials(const size_t materialcount,
 }
 
 void VulkanGraphicsModule::pushRender(const size_t renderInfoCount,
-                                      const RenderInfo *renderInfos) {
+                                      const RenderInfo *renderInfos,
+                                      const size_t offset) {
   EXPECT(renderInfoCount != 0 && renderInfos != nullptr);
 
   const CommandBufferAllocateInfo commandBufferAllocate(
       pool, CommandBufferLevel::eSecondary, 1);
   const CommandBuffer cmdBuf =
-      device.allocateCommandBuffers(commandBufferAllocate).back();
+      offset == 0
+          ? device.allocateCommandBuffers(commandBufferAllocate).back()
+          : this->secondaryCommandBuffer[this->secondaryCommandBuffer.size() -
+                                         offset];
 
   const CommandBufferInheritanceInfo inheritance(renderpass, 0);
   const CommandBufferBeginInfo beginInfo(
@@ -212,8 +216,10 @@ void VulkanGraphicsModule::pushRender(const size_t renderInfoCount,
     }
   }
   cmdBuf.end();
-  const std::lock_guard onExitUnlock(commandBufferRecording);
-  secondaryCommandBuffer.push_back(cmdBuf);
+  if (offset == 0) {
+    const std::lock_guard onExitUnlock(commandBufferRecording);
+    secondaryCommandBuffer.push_back(cmdBuf);
+  }
 }
 
 inline void submitAndWait(const Device &device, const Queue &queue,

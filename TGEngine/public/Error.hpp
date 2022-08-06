@@ -2,7 +2,7 @@
 
 #if _HAS_NODISCARD && !defined(_NODISCARD)
 #define _NODISCARD [[nodiscard]]
-#else
+#elif !defined(_NODISCARD)
 #define _NODISCARD
 #endif
 

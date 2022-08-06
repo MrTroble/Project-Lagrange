@@ -67,9 +67,7 @@ struct Light {
       : pos(pos), color(color), intensity(intensity) {}
 };
 
-enum class DataType {
-  IndexData, VertexData, VertexIndexData, Uniform, All
-};
+enum class DataType { IndexData, VertexData, VertexIndexData, Uniform, All };
 
 class APILayer : public main::Module { // Interface
 protected:
@@ -96,13 +94,14 @@ public:
   virtual void changeData(const size_t bufferIndex, const void *data,
                           const size_t dataSizes, const size_t offset = 0) = 0;
 
-  void changeData(const size_t bufferIndex, void* data, const size_t dataSizes,
-      const size_t offset = 0) {
+  void changeData(const size_t bufferIndex, void *data, const size_t dataSizes,
+                  const size_t offset = 0) {
     changeData(bufferIndex, (const void *)data, dataSizes, offset);
   }
 
   virtual void pushRender(const size_t renderInfoCount,
-                          const RenderInfo *renderInfos) = 0;
+                          const RenderInfo *renderInfos,
+                          const size_t offset = 0) = 0;
 
   _NODISCARD virtual size_t pushSampler(const SamplerInfo &sampler) = 0;
 

@@ -1,9 +1,10 @@
 #pragma once
 
+#include "../util/Calculations.hpp"
+#include "../util/VulkanHelper.hpp"
 #include <algorithm>
 #include <graphics/GUIModule.hpp>
 #include <imgui.h>
-#include "../util/Calculations.hpp"
 
 constexpr auto minY = -100.0f;
 constexpr auto maxY = 100.0f;
@@ -24,7 +25,7 @@ public:
     if (ImGui::Button("Apply")) {
       currentY = std::clamp(currentY, minY, maxY);
       interpolation = std::clamp(interpolation, minInterpolate, maxInterpolate);
-      makeData(currentY, interpolation);
+      makeVulkan();
     }
     ImGui::End();
   }

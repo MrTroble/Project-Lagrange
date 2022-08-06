@@ -4,6 +4,9 @@
 #include <Windows.h>
 #define VULKAN_HPP_ENABLE_DYNAMIC_LOADER_TOOL 1
 #define VK_USE_PLATFORM_WIN32_KHR 1
+#undef min
+#undef max
+#undef ERROR
 #endif // WIN32
 #include "../../../public/Module.hpp"
 #include "../GameGraphicsModule.hpp"
@@ -90,14 +93,14 @@ public:
   size_t pushMaterials(const size_t materialcount,
                        const Material *materials) override;
 
-  size_t pushData(const size_t dataCount, void *data,
-                  const size_t *dataSizes, const DataType type) override;
+  size_t pushData(const size_t dataCount, void *data, const size_t *dataSizes,
+                  const DataType type) override;
 
   void changeData(const size_t bufferIndex, const void *data,
                   const size_t dataSizes, const size_t offset = 0) override;
 
-  void pushRender(const size_t renderInfoCount,
-                  const RenderInfo *renderInfos) override;
+  void pushRender(const size_t renderInfoCount, const RenderInfo *renderInfos,
+                  const size_t offset = 0) override;
 
   size_t pushSampler(const SamplerInfo &sampler) override;
 

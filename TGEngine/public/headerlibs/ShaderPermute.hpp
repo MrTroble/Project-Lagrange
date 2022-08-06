@@ -503,9 +503,11 @@ public:
       return output;
     try {
       postProcess(output.output, glslLookup);
+#ifdef DEBUG
       for (auto &str : output.output) {
-        printf(str.c_str());
+        printf("%s\n", str.c_str());
       }
+#endif // DEBUG
       auto stringPtr = output.output;
       std::vector<const char *> cstrings;
       cstrings.resize(stringPtr.size());
