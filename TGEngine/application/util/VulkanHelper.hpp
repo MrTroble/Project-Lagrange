@@ -1,7 +1,4 @@
 #pragma once
-#define SPR_NO_GLSL_INCLUDE 1
-#define SPR_NO_STATIC 1
-#define SPR_STATIC extern
 
 #include <glm/glm.hpp>
 #include <graphics/GameGraphicsModule.hpp>

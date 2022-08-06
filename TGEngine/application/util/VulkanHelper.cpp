@@ -1,11 +1,15 @@
 #include "VulkanHelper.hpp"
+
+#define SPR_NO_GLSL_INCLUDE 1
+#define SPR_NO_STATIC 1
+#define SPR_STATIC extern
+
 #include <glm/gtx/rotate_vector.hpp>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <graphics/vulkan/VulkanShaderPipe.hpp>
 #include <vulkan/vulkan.hpp>
 #undef ERROR
-#include "../TGApp.hpp"
 #include "Calculations.hpp"
 #include "DataManager.hpp"
 #include <TGEngine.hpp>
@@ -19,6 +23,7 @@
 #include <vector>
 #undef min
 #undef max
+#include "../TGApp.hpp"
 
 using namespace tge::main;
 using namespace tge::graphics;

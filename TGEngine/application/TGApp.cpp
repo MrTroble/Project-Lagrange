@@ -25,7 +25,8 @@ using namespace tge;
 TGAppGUI *guiModul = new TGAppGUI;
 TGAppIO *ioModul = new TGAppIO;
 
-int main() {
+int main(const int count, const char** strings) {
+
   lateModules.push_back(guiModul);
   lateModules.push_back(ioModul);
 
@@ -34,7 +35,12 @@ int main() {
     printf("Error in init!");
     return -1;
   }
-  readData("degree5.dcplt");
+  if (count > 1) {
+    readData(strings[1]);
+  } else {
+    readData("degree5.dcplt");
+  }
+
   auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
   ioModul->api = api;

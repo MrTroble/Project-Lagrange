@@ -91,10 +91,10 @@ target_include_directories(TGRenderTest PUBLIC "public")
 target_link_libraries(TGRenderTest PUBLIC TGEngine)
 
 
-add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp")
+add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp" )
 target_include_directories(TGApp PUBLIC "public")
 target_link_libraries(TGApp PUBLIC TGEngine)
 
-add_executable(TGAppTest "application/test/TGTest.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp")
+add_executable(TGAppTest "application/test/TGTest.cpp" "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp" )
 target_include_directories(TGAppTest PUBLIC "public")
 target_link_libraries(TGAppTest PUBLIC TGEngine gtest_main)

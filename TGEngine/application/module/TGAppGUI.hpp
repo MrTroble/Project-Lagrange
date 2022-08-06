@@ -6,8 +6,8 @@
 #include <graphics/GUIModule.hpp>
 #include <imgui.h>
 
-constexpr auto minY = -100.0f;
-constexpr auto maxY = 100.0f;
+constexpr auto minY = -10.0f;
+constexpr auto maxY = 10.0f;
 
 constexpr auto minInterpolate = 1;
 constexpr auto maxInterpolate = 10;
