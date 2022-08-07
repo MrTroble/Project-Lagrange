@@ -42,7 +42,9 @@ bool funcAdded = false;
 main::Error IOModule::init() {
   if (!funcAdded) {
     auto win = main::getGameGraphicsModule()->getWindowModule();
+#ifdef WIN32
     win->customFn.push_back((void *)callback);
+#endif // WIN32
     funcAdded = true;
   }
   ios.push_back(this);
