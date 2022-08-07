@@ -15,19 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Configure CMake
-        run: cmake ./TGEngine -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run: cmake ./TGEngine -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
-           path: ${{github.workspace}}/build/deps
+           path: ${{github.workspace}}\build\_deps
            key: wincache
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.0
         with:
           name: TGAppWindows
-          path: ${{github.workspace}}/build/TGApp.exe
+          path: ${{github.workspace}}\build\Release\TGApp.exe
           if-no-files-found: error
           
   build_linux:
@@ -41,7 +41,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
-           path: ${{github.workspace}}/build/deps
+           path: ${{github.workspace}}/build/_deps
            key: linuxcache
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -49,5 +49,5 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: TGAppLinux
-          path: ${{github.workspace}}/build/TGApp.exe
+          path: ${{github.workspace}}/build/Release/TGApp.exe
           if-no-files-found: error
