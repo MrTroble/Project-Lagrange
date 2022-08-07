@@ -14,13 +14,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Configure CMake
-        run: cmake ./TGEngine -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
            path: ${{github.workspace}}\build\_deps
            key: wincache
+      - name: Configure CMake
+        run: cmake ./TGEngine -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       - name: Build
         run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
       - name: Upload a Build Artifact
@@ -36,13 +36,13 @@ jobs:
       - name: Update Clang
         run: sudo apt install clang-14 --install-suggests
       - uses: actions/checkout@v3
-      - name: Configure CMake
-        run: cmake ./TGEngine -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
            path: ${{github.workspace}}/build/_deps
            key: linuxcache
+      - name: Configure CMake
+        run: cmake ./TGEngine -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       - name: Upload a Build Artifact
