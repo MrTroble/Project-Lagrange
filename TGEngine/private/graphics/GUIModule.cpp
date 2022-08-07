@@ -22,7 +22,10 @@ inline void render(gui::GUIModule *gmod) {
   const Framebuffer frame = ((Framebuffer *)gmod->framebuffer)[vgm->nextImage];
 
   ImGui_ImplVulkan_NewFrame();
+#ifdef WIN32
   ImGui_ImplWin32_NewFrame();
+#endif // WIN32
+
   ImGui::NewFrame();
 
   gmod->renderGUI();
@@ -57,8 +60,8 @@ main::Error GUIModule::init() {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
   ImGui::StyleColorsDark();
-  winModule->customFn.push_back((void *)ImGui_ImplWin32_WndProcHandler);
 #ifdef WIN32
+  winModule->customFn.push_back((void *)ImGui_ImplWin32_WndProcHandler);
   const bool winInit = ImGui_ImplWin32_Init(winModule->hWnd);
   if (!winInit)
     return main::Error::COULD_NOT_CREATE_WINDOW;
