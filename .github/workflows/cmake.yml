@@ -35,8 +35,10 @@ jobs:
           if-no-files-found: error
           
   build_linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
+      - name: Update apt
+        run: sudo apt update
       - name: Update vulkan sdk
         run: sudo apt install vulkan-sdk
       - name: Update Clang
