@@ -1,8 +1,11 @@
 #include "../../public/IO/IOModule.hpp"
 #include "../../public/TGEngine.hpp"
-#include <Windows.h>
 #include <iostream>
+
+#ifdef WIN32
+#include <Windows.h>
 #include <windowsx.h>
+#endif // WIN
 
 namespace tge::io {
 
