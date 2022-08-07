@@ -19,7 +19,13 @@ jobs:
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: TGAppWindows
+          path: ${{github.workspace}}/build/TGApp.exe
+          if-no-files-found: error
+          
   build_linux:
     runs-on: ubuntu-22.04
     steps:
@@ -31,3 +37,9 @@ jobs:
 
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: TGAppLinux
+          path: ${{github.workspace}}/build/TGApp.exe
+          if-no-files-found: error
