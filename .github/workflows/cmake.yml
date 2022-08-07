@@ -8,7 +8,6 @@ on:
 
 env:
   BUILD_TYPE: Release
-
 jobs:
   build_win:
     runs-on: windows-latest
@@ -38,9 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update apt
-        run: sudo apt update
-      - name: Update vulkan sdk
-        run: sudo apt install vulkan-sdk
+        run: |
+          wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.216-focal.list https://packages.lunarg.com/vulkan/1.3.216/lunarg-vulkan-1.3.216-focal.list
+          sudo apt update
+          sudo apt install vulkan-sdk
       - name: Update Clang
         run: sudo apt install clang-14 --install-suggests
       - uses: actions/checkout@v3
