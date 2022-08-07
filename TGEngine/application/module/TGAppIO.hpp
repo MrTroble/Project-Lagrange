@@ -64,10 +64,9 @@ public:
   void mouseEvent(const tge::io::MouseEvent event) override {
     if ((event.pressed & 1) == 1) {
       total += (glm::vec2(event.x, event.y) - last) * 0.001f;
-      total = glm::clamp(total, glm::vec2(-7, -7), glm::vec2(7, 7));
       printf("(%f, %f)\n", total.x, total.y);
-      rotation = glm::toMat4(glm::quat(total.x, 0, 1, 0) *
-                             glm::quat(total.y, 1, 0, 0));
+      rotation = glm::mat4(1) * glm::rotate(total.x, glm::vec3(0, 1, 0)) *
+                 glm::rotate(total.y, glm::vec3(1, 0, 0));
     } else if (event.pressed == tge::io::SCROLL) {
       constexpr float WEIGHT = 0.0002f;
       scale += event.x * WEIGHT;
