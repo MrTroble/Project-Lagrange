@@ -37,6 +37,8 @@ jobs:
   build_linux:
     runs-on: ubuntu-22.04
     steps:
+      - name: Update vulkan sdk
+        run: sudo apt install vulkan-sdk
       - name: Update Clang
         run: sudo apt install clang-14 --install-suggests
       - uses: actions/checkout@v3
