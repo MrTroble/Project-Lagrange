@@ -38,15 +38,13 @@ FETCHCONTENT_MAKEAVAILABLE(imgui)
 include_directories("${vulkansdk_SOURCE_DIR}/Include" "${vulkansdk_SOURCE_DIR}/Third-Party/Include" "${imgui_SOURCE_DIR}")
 link_directories("${vulkansdk_SOURCE_DIR}/Lib" "${vulkansdk_SOURCE_DIR}/Third-Party/Bin")
 
-add_library (TGEngine STATIC
-	# public
+set(ENGINE_DATA   
 	"public/TGEngine.hpp"
 	"public/graphics/vulkan/VulkanGraphicsModule.hpp"
 	"public/Module.hpp"
 	"public/Error.hpp"
 	"public/graphics/GameGraphicsModule.hpp"
 	"public/Util.hpp"
-	# private
 	"private/TGEngine.cpp"
 	"private/Error.cpp"
     "private/graphics/Vulkan/VulkanGraphicsModule.cpp"     
@@ -54,8 +52,13 @@ add_library (TGEngine STATIC
     "private/Util.cpp"
 	"private/graphics/WindowModule.cpp" 
 	"private/graphics/Vulkan/VulkanShaderModule.cpp" 
-	"public/graphics/vulkan/VulkanShaderModule.hpp" 
-	"public/graphics/vulkan/VulkanShaderPipe.hpp" 
+	"public/graphics/vulkan/VulkanShaderModule.hpp"
+	"public/graphics/Material.hpp" 
+	"public/graphics/APILayer.hpp" 
+	"private/graphics/Material.cpp"  
+	"public/IO/IOModule.hpp" 
+	"private/IO/IOModule.cpp"
+    "public/graphics/vulkan/VulkanShaderPipe.hpp" 
 	"public/graphics/GameShaderModule.hpp" 
 	"private/graphics/GUIModule.cpp" 
 	"public/graphics/GUIModule.hpp" 
@@ -71,11 +74,17 @@ add_library (TGEngine STATIC
 	"${imgui_SOURCE_DIR}/imstb_rectpack.h"
 	"${imgui_SOURCE_DIR}/imstb_textedit.h"
 	"${imgui_SOURCE_DIR}/imstb_truetype.h"
-	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp"
-	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.h"
 	"${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp"
     "${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.h"
-  "public/graphics/Material.hpp" "public/graphics/APILayer.hpp" "private/graphics/Material.cpp"  "public/IO/IOModule.hpp" "private/IO/IOModule.cpp")
+)
+if(WIN32)  
+list(APPEND 	
+    "${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp"
+	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.h"
+)
+endif()
+
+add_library (TGEngine STATIC ${ENGINE_DATA})
 target_link_libraries(TGEngine PUBLIC glslang shaderc_combined vulkan-1)
 
 add_executable(TGEngineTest "test/TGTest.cpp")
