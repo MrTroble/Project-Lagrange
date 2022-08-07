@@ -22,11 +22,7 @@ using namespace tge::main;
 using namespace tge::graphics;
 using namespace tge;
 
-TGAppGUI *guiModul = new TGAppGUI;
-TGAppIO *ioModul = new TGAppIO;
-
 int main(const int count, const char** strings) {
-
   lateModules.push_back(guiModul);
   lateModules.push_back(ioModul);
 

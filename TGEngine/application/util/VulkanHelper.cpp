@@ -172,6 +172,12 @@ void makeVulkan() {
   makeData(guiModul->currentY, guiModul->interpolation);
 
   api->device.waitIdle();
+  for (size_t i = 0; i < api->bufferList.size() - ioModul->binding; i++) {
+    const auto offset = ioModul->binding + i;
+    api->device.freeMemory(api->bufferMemoryList[offset]);
+    api->device.destroyBuffer(api->bufferList[offset]);
+  }
+
   const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
   const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
                                          shaderOffset, ioModul->mvpMatrix, 1);
