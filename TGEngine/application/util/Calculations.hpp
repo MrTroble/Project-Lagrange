@@ -189,6 +189,8 @@ inline void makeData(const float currentY, const int interpolationCount) {
       }
       if (!(maxY >= currentY && currentY >= minY))
         continue;
+      const auto cellOffset = c * dX * dY;
+
       const auto localY = (currentY - minY) / (maxY - minY);
       calculationInfo.cache = generateYCaches(localY, i);
       calculationInfo.pPolynomials = cache.data() + countPerCell * c;
@@ -199,7 +201,6 @@ inline void makeData(const float currentY, const int interpolationCount) {
       const auto partY = dY - 1;
       const auto setpX = partX + 1;
       interpolations.resize(partX * partY);
-      const auto cellOffset = c * dX * dY;
       for (size_t x = 0; x < partX; x++) {
         for (size_t y = 0; y < partY; y++) {
           const auto offset = x + y * setpX + cellOffset;

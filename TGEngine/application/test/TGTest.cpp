@@ -40,11 +40,24 @@ TEST(data, prepare) {
   EXPECT_EQ(cell.points[0], glm::vec3(0.5, 0.5, 0.5));
   EXPECT_EQ(cell.polynomials[0], glm::vec4(0.5, 0.5, 0.5, 0.639095));
 
+  const auto &cell2 = cells[15];
+  ASSERT_EQ(cell2.polynomials.size(), 216);
+  EXPECT_EQ(cell2.centerOfCell, glm::vec3(0.625, 0.375, 0.625));
+  EXPECT_EQ(cell2.points[0], glm::vec3(0.5, 0.5, 0.5));
+  EXPECT_EQ(cell2.polynomials[0], glm::vec4(0.5, 0.5, 0.5, 0.646398));
+  EXPECT_EQ(cell2.polynomials[5], glm::vec4(0.5, 0.25, 0.5, 0.191265));
+  EXPECT_EQ(cell2.polynomials[11], glm::vec4(0.55, 0.25, 0.5, 0.607602));
+
   const auto &locals = CellEntry::localPositions[6];
   ASSERT_EQ(locals.size(), cells.size() * 6 * 6);
   EXPECT_EQ(locals[0], glm::vec2(-0.25, 0));
   EXPECT_EQ(locals[36], glm::vec2(0, 0));
   EXPECT_EQ(locals[37], glm::vec2(0.05, 0));
+  EXPECT_EQ(locals[37], glm::vec2(0.05, 0));
+  EXPECT_EQ(locals[36 * 15], glm::vec2(0, -0.25));
+  const auto x = locals[36 * 15 + 1];
+  EXPECT_FLOAT_EQ(x.x, 0.05f);
+  EXPECT_FLOAT_EQ(x.y, -0.25f);
 
   const auto &cache = CellEntry::polynomialHeightCache[6];
   ASSERT_EQ(cache.size(), cells.size() * 6 * 6 * 6);

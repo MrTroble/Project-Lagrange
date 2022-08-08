@@ -10,7 +10,8 @@ if(WIN32)
 add_compile_options("/D_ITERATOR_DEBUG_LEVEL=0" "/MD" "/EHa")
 add_link_options("/ignore:4099")
 else()
-add_compile_options("-Wno-deprecated-volatile" "-lpthread")
+add_compile_options("-Wno-deprecated-volatile")
+add_link_options("-static")
 endif()
 
 include(FetchContent)
@@ -36,7 +37,6 @@ FETCHCONTENT_MAKEAVAILABLE(googletest)
 FETCHCONTENT_MAKEAVAILABLE(vulkansdk)
 FETCHCONTENT_MAKEAVAILABLE(imgui)
 include_directories("${vulkansdk_SOURCE_DIR}/Include" "${vulkansdk_SOURCE_DIR}/Third-Party/Include" "${imgui_SOURCE_DIR}")
-link_directories("${vulkansdk_SOURCE_DIR}/Lib" "${vulkansdk_SOURCE_DIR}/Third-Party/Bin")
 
 set(ENGINE_DATA   
 	"public/TGEngine.hpp"
@@ -78,6 +78,7 @@ set(ENGINE_DATA
     "${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.h"
 )
 if(WIN32)  
+link_directories("${vulkansdk_SOURCE_DIR}/Lib" "${vulkansdk_SOURCE_DIR}/Third-Party/Bin")
 list(APPEND 	
     "${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp"
 	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.h"

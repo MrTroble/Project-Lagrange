@@ -44,9 +44,11 @@ inline void prepareData() {
         const auto offset = startID + p + c * countPerCell;
         cache[offset] = a;
       }
+
+      const auto cellOffset = c * dx * dy;
       for (size_t x = 0; x < dx; x++) {
         for (size_t y = 0; y < dy; y++) {
-          localcache[x + dx * y + localStart + (c * dx * dy)] =
+          localcache[x + dx * y + localStart + cellOffset] =
               glm::vec2(polynomials[x + dx * y]);
         }
       }
