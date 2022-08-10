@@ -199,10 +199,6 @@ TEST(maketest, sample1) {
 	CalculationInfo<> info;
 	info.xFunc = getFunction(3);
 	info.yFunc = getFunction(3);
-	std::function<double(double, int)> referenceFunc =
-		PolynomialEntry<>::P2functions;
-	EXPECT_STREQ(info.xFunc.target_type().raw_name(),
-		referenceFunc.target_type().raw_name());
 	info.dimensions = degreeFromLayer(3);
 	const auto [dx, dy, dz] = info.dimensions;
 	info.cache = yCache;
