@@ -239,9 +239,9 @@ inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 			for (size_t i = 0; i < 3; i++)
 			{
 				min[i] = std::min(min[i], vec[i]);
-				max[i] = std::min(max[i], vec[i]);
+				max[i] = std::max(max[i], vec[i]);
 			}
 		}
 	}
-	return -1.0f*(max - min);
+	return -0.5f*(max - min);
 }
