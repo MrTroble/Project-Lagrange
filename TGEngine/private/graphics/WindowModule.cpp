@@ -6,97 +6,140 @@
 #ifdef WIN32
 #include <Windows.h>
 #endif
+#ifdef __linux__
+#include<X11/X.h>
+#include<X11/Xlib.h>
+#endif
 
 namespace tge::graphics {
 
 #ifdef WIN32
-LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-  if (Msg == WM_CLOSE) {
-    util::requestExit();
-    return 0;
-  }
-  return DefWindowProc(hWnd, Msg, wParam, lParam);
-}
+	LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+		if (Msg == WM_CLOSE) {
+			util::requestExit();
+			return 0;
+		}
+		return DefWindowProc(hWnd, Msg, wParam, lParam);
+	}
 
-main::Error windowsInit(WindowModule *winModule) {
-  HMODULE systemHandle = GetModuleHandle(nullptr);
-  if (!systemHandle)
-    return main::Error::NO_MODULE_HANDLE;
-  winModule->hInstance = systemHandle;
+	main::Error init(WindowModule* winModule) {
+		HMODULE systemHandle = GetModuleHandle(nullptr);
+		if (!systemHandle)
+			return main::Error::NO_MODULE_HANDLE;
+		winModule->hInstance = systemHandle;
 
-  const auto windowProperties = winModule->getWindowProperties();
+		const auto windowProperties = winModule->getWindowProperties();
 
-  WNDCLASSEX wndclass;
-  FillMemory(&wndclass, sizeof(WNDCLASSEX), 0);
-  wndclass.cbSize = sizeof(WNDCLASSEX);
-  wndclass.style = CS_ENABLE | CS_OWNDC | CS_HREDRAW;
-  wndclass.lpfnWndProc = callback;
-  wndclass.hInstance = systemHandle;
-  wndclass.lpszClassName = ENGINE_NAME;
+		WNDCLASSEX wndclass;
+		FillMemory(&wndclass, sizeof(WNDCLASSEX), 0);
+		wndclass.cbSize = sizeof(WNDCLASSEX);
+		wndclass.style = CS_ENABLE | CS_OWNDC | CS_HREDRAW;
+		wndclass.lpfnWndProc = callback;
+		wndclass.hInstance = systemHandle;
+		wndclass.lpszClassName = ENGINE_NAME;
 
-  auto regWndClass = RegisterClassEx(&wndclass);
-  if (!regWndClass) {
-    if (GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-      return main::Error::COULD_NOT_CREATE_WINDOW_CLASS;
-  }
+		auto regWndClass = RegisterClassEx(&wndclass);
+		if (!regWndClass) {
+			if (GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+				return main::Error::COULD_NOT_CREATE_WINDOW_CLASS;
+		}
 
-  auto window = CreateWindowEx(
-      WS_EX_APPWINDOW, ENGINE_NAME, APPLICATION_NAME,
-      WS_CLIPSIBLINGS | WS_CAPTION | WS_SIZEBOX | WS_SYSMENU,
-      windowProperties.x, windowProperties.y, windowProperties.width,
-      windowProperties.height, NULL, NULL, systemHandle, NULL);
-  if (!window)
-    return main::Error::COULD_NOT_CREATE_WINDOW;
-  winModule->hWnd = window;
-  ShowWindow(window, SW_SHOW);
-  UpdateWindow(window);
-  return main::Error::NONE;
-}
+		auto window = CreateWindowEx(
+			WS_EX_APPWINDOW, ENGINE_NAME, APPLICATION_NAME,
+			WS_CLIPSIBLINGS | WS_CAPTION | WS_SIZEBOX | WS_SYSMENU,
+			windowProperties.x, windowProperties.y, windowProperties.width,
+			windowProperties.height, NULL, NULL, systemHandle, NULL);
+		if (!window)
+			return main::Error::COULD_NOT_CREATE_WINDOW;
+		winModule->hWnd = window;
+		ShowWindow(window, SW_SHOW);
+		UpdateWindow(window);
+		return main::Error::NONE;
+	}
 
-void windowsPoolMessages(WindowModule *winModule) {
-  MSG msg;
-  const HWND wnd = (HWND)winModule->hWnd;
-  while (PeekMessage(&msg, wnd, 0, 0, PM_REMOVE)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-    for(const auto fun : winModule->customFn)
-      ((WNDPROC)fun)(wnd, msg.message, msg.wParam, msg.lParam);
-  }
-}
+	void pool(WindowModule* winModule) {
+		MSG msg;
+		const HWND wnd = (HWND)winModule->hWnd;
+		while (PeekMessage(&msg, wnd, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			for (const auto fun : winModule->customFn)
+				((WNDPROC)fun)(wnd, msg.message, msg.wParam, msg.lParam);
+		}
+	}
 
-void windowsDestroy(WindowModule *winModule) {
-  DestroyWindow((HWND)winModule->hWnd);
-}
+	void destroy(WindowModule* winModule) {
+		DestroyWindow((HWND)winModule->hWnd);
+	}
 
 #endif // WIN32
 
-main::Error WindowModule::init() {
-#ifdef WIN32
-  osThread = std::thread([winM = this] {
-    winM->osMutex.lock();
-    windowsInit(winM);
-    winM->osMutex.unlock();
-    std::lock_guard lg2(winM->exitMutex);
-    while (!winM->closing) {
-      windowsPoolMessages(winM);
-    }
-    windowsDestroy(winM);
-  });
-  osThread.detach();
-  std::lock_guard lg(this->osMutex);
-#endif // WIN32
-  return main::Error::NONE;
-}
+#ifdef __linux__
+	typedef void(*WNDPROC)(XEvent* ev);
 
-void WindowModule::tick(double deltatime) {}
+	main::Error init(WindowModule* winModule) {
+		winModule->hInstance = XOpenDisplay(NULL);
+		if (!winModule->hInstance)
+			return main::Error::NO_MODULE_HANDLE;
+		Display* display = (Display*)winModule->hInstance;
+		const auto root = DefaultRootWindow(display);
+		if (!root)
+			return main::Error::NO_MODULE_HANDLE;
 
-void WindowModule::destroy() {
-  this->closing = true;
-  std::lock_guard lg(this->exitMutex);
-}
+		const auto windowProperties = winModule->getWindowProperties();
 
-WindowProperties WindowModule::getWindowProperties() {
-  return WindowProperties();
-}
+		XSetWindowAttributes attr{};
+
+		winModule->hWnd = (void*)XCreateWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
+			windowProperties.height, 0, CopyFromParent, InputOutput, CopyFromParent, 0, &attr);
+		if (!winModule->hWnd)
+			return main::Error::COULD_NOT_CREATE_WINDOW;
+
+		XMapWindow(display, (Window)winModule->hWnd);
+		XStoreName(display, (Window)winModule->hWnd, APPLICATION_NAME);
+		return tge::main::Error::NONE;
+	}
+
+	void pool(WindowModule* winModule) {
+		XEvent xev;
+		XNextEvent((Display*)winModule->hInstance, &xev);
+		for (const auto fun : winModule->customFn)
+			((WNDPROC)fun)(&xev);
+	}
+
+	void destroy(WindowModule* winModule) {
+		XDestroyWindow((Display*)winModule->hInstance, (Window)winModule->hWnd);
+		XCloseDisplay((Display*)winModule->hInstance);
+	}
+#endif
+
+	main::Error WindowModule::init() {
+		osThread = std::thread([winM = this] {
+			winM->osMutex.lock();
+			main::error = tge::graphics::init(winM);
+			if (main::error != tge::main::Error::NONE)
+				return;
+			winM->osMutex.unlock();
+			std::lock_guard lg2(winM->exitMutex);
+			while (!winM->closing) {
+				tge::graphics::pool(winM);
+			}
+			tge::graphics::destroy(winM);
+			});
+		osThread.detach();
+		std::lock_guard lg(this->osMutex);
+		return main::error;
+	}
+
+	void WindowModule::tick(double deltatime) {}
+
+	void WindowModule::destroy() {
+		this->closing = true;
+		std::lock_guard lg(this->exitMutex);
+	}
+
+	WindowProperties WindowModule::getWindowProperties() {
+		return WindowProperties();
+	}
 
 } // namespace tge::graphics

@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <type_traits>
 #include <vector>
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#define COMPILED_IN_LINUX
+#elif defined(__APPLE__) && defined(__MACH__)
+#define COMPILED_IN_MACOS
+#elif defined(_WIN32) || defined(_WIN64)
+#define COMPILED_IN_WINDOWS
+#endif
 
 namespace fs = std::filesystem;
 

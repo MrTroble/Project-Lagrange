@@ -8,12 +8,18 @@
 #undef max
 #undef ERROR
 #endif // WIN32
+#ifdef __linux__
+#define VULKAN_HPP_ENABLE_DYNAMIC_LOADER_TOOL 1
+#define VK_USE_PLATFORM_XLIB_KHR 1
+#endif
 #include "../../../public/Module.hpp"
 #include "../GameGraphicsModule.hpp"
 #include "VulkanShaderModule.hpp"
 #include "VulkanShaderPipe.hpp"
 #include <vector>
 #include <vulkan/vulkan.hpp>
+#undef None
+#undef Bool
 
 namespace tge::graphics {
 
