@@ -24,9 +24,9 @@ jobs:
         run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}}
       - name: Copy
         run: |
-          xcopy ${{github.workspace}}\TGEngine\application\assets\ ${{github.workspace}}\build\Release\assets\ /S/I
-          xcopy ${{github.workspace}}\TGEngine\test\assets\*.* ${{github.workspace}}\build\Release\assets\ /S/I
-          xcopy ${{github.workspace}}\TGEngine\application\assets\degree5.dcplt ${{github.workspace}}\build\Release\degree5.dcplt /S/I
+          xcopy ${{github.workspace}}\TGEngine\application\assets\ ${{github.workspace}}\build\Release\assets\ /S/I/Y
+          xcopy ${{github.workspace}}\TGEngine\test\assets\*.* ${{github.workspace}}\build\Release\assets\ /S/I/Y
+          xcopy ${{github.workspace}}\TGEngine\application\assets\degree5.dcplt ${{github.workspace}}\build\Release\degree5.dcplt /S/I/Y
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.0
         with:
@@ -60,7 +60,7 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       - name: Copy
         run: |
-          cp -r ${{github.workspace}}/TGEngine/application/assets/ ${{github.workspace}}/build/assets/
+          cp -r ${{github.workspace}}/TGEngine/application/assets/ ${{github.workspace}}/build/
           cp -r ${{github.workspace}}/TGEngine/test/assets/*.* ${{github.workspace}}/build/assets/
           cp -r ${{github.workspace}}/TGEngine/application/assets/degree5.dcplt ${{github.workspace}}/build/degree5.dcplt
       - name: Upload a Build Artifact
