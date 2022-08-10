@@ -304,3 +304,4 @@ dependencies/deps.zip
 /TGEngine/conaninfo.txt
 /TGEngine/conanbuildinfo.txt
 /TGEngine/conan.lock
+/build

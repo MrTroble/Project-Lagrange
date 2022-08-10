@@ -59,7 +59,7 @@ jobs:
         with:
           name: TGAppLinux
           path: |
-            ${{github.workspace}}/build/Release/TGApp.exe
+            ${{github.workspace}}/build/Release/TGApp
             ${{github.workspace}}/TGEngine/test/assets/
             ${{github.workspace}}/TGEngine/application/assets/*.*
             !${{github.workspace}}/TGEngine/test/assets/glTF-Sample-Models
