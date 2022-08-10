@@ -51,7 +51,7 @@ jobs:
            path: ${{github.workspace}}/build/_deps
            key: linuxcache
       - name: Configure CMake
-        run: cmake ./TGEngine -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang
+        run: cmake ./TGEngine -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=clang++
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       - name: Upload a Build Artifact
