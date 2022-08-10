@@ -243,5 +243,6 @@ inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 			}
 		}
 	}
+	CellEntry::minMax = glm::vec2(min.z, max.z);
 	return -0.5f*(max - min);
 }

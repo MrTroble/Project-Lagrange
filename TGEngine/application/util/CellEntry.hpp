@@ -28,6 +28,9 @@ extern std::array<std::vector<double>, MAX_DEGREE> polynomialHeightCache;
 extern std::array<std::vector<glm::vec2>, MAX_DEGREE>
     localPositions;
 
+// Const data
+extern glm::vec2 minMax;
+
 // Renderdata
 extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 

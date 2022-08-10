@@ -18,7 +18,7 @@
         "layout(binding=1) uniform VIEW_UBO { ",
         "   mat4 viewMatrix;",
         "} viewUbo;",
-        "layout(location=0) out float height",
+        "layout(location=0) out float height;",
         "out gl_PerVertex {",
         "   vec4 gl_Position;",
         "};",

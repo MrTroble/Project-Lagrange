@@ -43,7 +43,13 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
   util::OnExit exitHandle(&glslang::FinalizeProcess);
   shader::VulkanShaderPipe shaderPipe{};
 
-  auto fragment = permute::fromFile<permute::PermuteGLSL>("assets/test.frag");
+  auto fragment = permute::fromFile<permute::PermuteGLSL>("assets/height.frag");
+  permute::glslLookup["min"] = [&](const auto& input) {
+      return std::to_string(CellEntry::minMax.x);
+  };
+  permute::glslLookup["max"] = [&](const auto& input) {
+      return std::to_string(CellEntry::minMax.y);
+  };
   if (!fragment.generate()) {
     for (auto &str : fragment.getContent())
       printf("%s\n", str.c_str());
