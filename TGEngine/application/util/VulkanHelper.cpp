@@ -4,6 +4,7 @@
 #define SPR_NO_STATIC 1
 #define SPR_STATIC extern
 
+#include <limits>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
@@ -169,7 +170,8 @@ void makeVulkan() {
   auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
 
-  makeData(guiModul->currentY, guiModul->interpolation);
+  const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
+  ioModul->implTrans = vec;
 
   api->device.waitIdle();
   for (size_t i = ioModul->binding; i < api->bufferList.size(); i++) {

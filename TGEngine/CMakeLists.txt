@@ -89,7 +89,7 @@ target_link_libraries(TGEngine PUBLIC glslang shaderc_combined)
 if(WIN32)
 target_link_libraries(TGEngine PUBLIC vulkan-1)
 else()
-target_link_libraries(TGEngine PUBLIC vulkan)
+target_link_libraries(TGEngine PUBLIC vulkan m)
 endif()
 
 add_executable(TGEngineTest "test/TGTest.cpp")

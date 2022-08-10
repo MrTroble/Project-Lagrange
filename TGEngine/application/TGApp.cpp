@@ -23,43 +23,45 @@ using namespace tge::graphics;
 using namespace tge;
 
 int main(const int count, const char** strings) {
-  lateModules.push_back(guiModul);
-  lateModules.push_back(ioModul);
+	lateModules.push_back(guiModul);
+	lateModules.push_back(ioModul);
 
-  const auto initResult = init();
-  if (initResult != main::Error::NONE) {
-    printf("Error in init!");
-    return -1;
-  }
-  if (count > 1) {
-    readData(strings[1]);
-  } else {
-    readData("degree5.dcplt");
-  }
+	const auto initResult = init();
+	if (initResult != main::Error::NONE) {
+		printf("Error in init!");
+		return -1;
+	}
+	if (count > 1) {
+		readData(strings[1]);
+	}
+	else {
+		readData("degree5.dcplt");
+	}
 
-  auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
-  auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
-  ioModul->api = api;
+	auto api = (tge::graphics::VulkanGraphicsModule*)getAPILayer();
+	auto shader = (tge::shader::VulkanShaderModule*)api->getShaderAPI();
+	ioModul->api = api;
 
-  makeData(guiModul->currentY, guiModul->interpolation);
+	const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
+	ioModul->implTrans = vec;
 
-  const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
-  const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
-                                         shaderOffset, ioModul->mvpMatrix);
-  ioModul->binding = bufferPoolID;
-  ioModul->sendChanges();
+	const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
+	const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
+		shaderOffset, ioModul->mvpMatrix);
+	ioModul->binding = bufferPoolID;
+	ioModul->sendChanges();
 
-  Light light;
-  light.color = glm::vec3(1, 1, 1);
-  light.pos = glm::vec3(0, 100, 0);
-  light.intensity = 100.0f;
-  api->pushLights(1, &light);
+	Light light;
+	light.color = glm::vec3(1, 1, 1);
+	light.pos = glm::vec3(0, 100, 0);
+	light.intensity = 100.0f;
+	api->pushLights(1, &light);
 
-  const auto startResult = start();
-  if (startResult != main::Error::NONE) {
-    printf("Error in start!");
-    return -1;
-  }
+	const auto startResult = start();
+	if (startResult != main::Error::NONE) {
+		printf("Error in start!");
+		return -1;
+	}
 
-  return (uint32_t)startResult;
+	return (uint32_t)startResult;
 }

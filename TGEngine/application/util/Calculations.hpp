@@ -161,7 +161,7 @@ namespace std {
 } // namespace std
 #endif
 
-inline void makeData(const float currentY, const int interpolationCount) {
+inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 	std::numeric_limits<double> flim;
 	for (auto& c : CellEntry::cellDataPerLayer)
 		c.clear();
@@ -230,4 +230,18 @@ inline void makeData(const float currentY, const int interpolationCount) {
 				begin(cellData) + start);
 		}
 	}
+
+	std::numeric_limits<float> limit;
+	auto min = glm::vec3(limit.max(), limit.max(), limit.max());
+	auto max = glm::vec3(limit.min(), limit.min(), limit.min());
+	for (const auto& vectors : CellEntry::cellDataPerLayer) {
+		for (const auto vec : vectors) {
+			for (size_t i = 0; i < 3; i++)
+			{
+				min[i] = std::min(min[i], vec[i]);
+				max[i] = std::min(max[i], vec[i]);
+			}
+		}
+	}
+	return -1.0f*(max - min);
 }
