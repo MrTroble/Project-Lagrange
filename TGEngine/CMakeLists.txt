@@ -11,7 +11,6 @@ add_compile_options("/D_ITERATOR_DEBUG_LEVEL=0" "/MD" "/EHa")
 add_link_options("/ignore:4099")
 else()
 add_compile_options("-Wno-deprecated-volatile")
-add_link_options("-static")
 endif()
 
 include(FetchContent)

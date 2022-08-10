@@ -18,14 +18,16 @@
         "layout(binding=1) uniform VIEW_UBO { ",
         "   mat4 viewMatrix;",
         "} viewUbo;",
-        "",
+        "layout(location=0) out float height",
         "out gl_PerVertex {",
         "   vec4 gl_Position;",
         "};",
         "",
         "void main() {",
         "   const int bufferIndex = gl_InstanceIndex * 4 + gl_VertexIndex;",
-        "   gl_Position = viewUbo.viewMatrix * cellUbo.cells[bufferIndex];",
+        "   const vec4 global = cellUbo.cells[bufferIndex];",
+        "   height = global.z;",
+        "   gl_Position = viewUbo.viewMatrix * global;",
         "}"
       ]
     }
