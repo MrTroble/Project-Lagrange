@@ -32,7 +32,7 @@ jobs:
         with:
           name: TGAppWindows
           path: |
-            ${{github.workspace}}\build\Release\TGApp
+            ${{github.workspace}}\build\Release\TGApp.exe
             ${{github.workspace}}\build\Release\assets
             ${{github.workspace}}\build\Release\degree5.dcplt
           if-no-files-found: error
