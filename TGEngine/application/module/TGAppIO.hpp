@@ -5,6 +5,8 @@
 #include <glm/gtx/transform.hpp>
 #include <graphics/GameGraphicsModule.hpp>
 
+bool isFocused();
+
 class TGAppIO : public tge::io::IOModule {
 public:
 	glm::vec3 translation = glm::vec3(0, 0, 0);
@@ -63,16 +65,18 @@ public:
 	}
 
 	void mouseEvent(const tge::io::MouseEvent event) override {
-		if ((event.pressed & 1) == 1) {
-			total += (glm::vec2(event.x, event.y) - last) * 0.001f;
-			total = glm::clamp(total, glm::vec2(-10, -10), glm::vec2(10, 10));
-			rotation = glm::mat4(1) * glm::rotate(total.x, glm::vec3(0, 1, 0)) *
-				glm::rotate(total.y, glm::vec3(1, 0, 0));
-		}
-		else if (event.pressed == tge::io::SCROLL) {
-			constexpr float WEIGHT = 0.0002f;
-			scale += event.x * WEIGHT;
-			scale = glm::clamp(scale, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(10000, 10000, 10000));
+		if (!isFocused()) {
+			if ((event.pressed & 1) == 1) {
+				total += (glm::vec2(event.x, event.y) - last) * 0.001f;
+				total = glm::clamp(total, glm::vec2(-10, -10), glm::vec2(10, 10));
+				rotation = glm::mat4(1) * glm::rotate(total.x, glm::vec3(0, 1, 0)) *
+					glm::rotate(total.y, glm::vec3(1, 0, 0));
+			}
+			else if (event.pressed == tge::io::SCROLL) {
+				constexpr float WEIGHT = 0.0002f;
+				scale += event.x * WEIGHT;
+				scale = glm::clamp(scale, glm::vec3(0.01f, 0.01f, 0.01f), glm::vec3(10000, 10000, 10000));
+			}
 		}
 		last = glm::vec2(event.x, event.y);
 	}

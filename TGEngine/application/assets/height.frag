@@ -21,7 +21,7 @@
         "return clamp(vec3(R,G,B), vec3(0,0,0), vec3(1, 1, 1));}",
         "void main() {",
         "   const float clamped = (height - minHeight)/(maxHeight - minHeight);",
-        "   COLOR = vec4(hue_to_rgb(clamped), 1);",
+        "   COLOR = vec4(hue_to_rgb(clamped*2.0f+0.15f), 1);",
         "   NORMAL = vec4(1, 1, 1, 1);",
         "   ROUGHNESS = 0;",
         "   METALLIC = 0;",

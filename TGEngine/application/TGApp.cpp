@@ -51,10 +51,10 @@ int main(const int count, const char** strings) {
 	ioModul->binding = bufferPoolID;
 	ioModul->sendChanges();
 
-	Light light;
+	auto &light = guiModul->light;
 	light.color = glm::vec3(1, 1, 1);
 	light.pos = glm::vec3(0, 100, 0);
-	light.intensity = 100.0f;
+	light.intensity = 1.0f;
 	api->pushLights(1, &light);
 
 	const auto startResult = start();

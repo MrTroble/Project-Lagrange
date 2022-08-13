@@ -12,21 +12,44 @@ constexpr auto maxY = 10.0f;
 constexpr auto minInterpolate = 1;
 constexpr auto maxInterpolate = 10;
 
+constexpr auto minLightpos = glm::vec3(-10, -10, -10);
+constexpr auto maxLightpos = glm::vec3(10, 10, 10);
+
+constexpr auto minColor = glm::vec3(0, 0, 0);
+constexpr auto maxColor = glm::vec3(1, 1, 1);
+
+constexpr auto minIntensity = 0.1f;
+constexpr auto maxIntensity = 10.0f;
+
 class TGAppGUI : public tge::gui::GUIModule {
 public:
-  float currentY = 0.5;
-  int interpolation = 4;
+	float currentY = 0.5;
+	int interpolation = 4;
+	Light light;
+	bool focused = false;
 
-  void renderGUI() {
-    ImGui::Begin("test");
-    ImGui::SliderFloat("Y: ", &currentY, minY, maxY);
-    ImGui::SliderInt("Interpolation: ", &interpolation, minInterpolate,
-                     maxInterpolate);
-    if (ImGui::Button("Apply")) {
-      currentY = std::clamp(currentY, minY, maxY);
-      interpolation = std::clamp(interpolation, minInterpolate, maxInterpolate);
-      makeVulkan();
-    }
-    ImGui::End();
-  }
+	void renderGUI() {
+		if (ImGui::Begin("test")) {
+			ImGui::SliderFloat("Y", &currentY, minY, maxY);
+			ImGui::SliderInt("Interpolation", &interpolation, minInterpolate,
+				maxInterpolate);
+			
+			if (ImGui::CollapsingHeader("Light")) {
+				ImGui::SliderFloat3("Light Position", (float*)&light.pos, minLightpos.x, maxLightpos.x);
+				ImGui::SliderFloat("Light Intensity", (float*)&light.intensity, minIntensity, maxIntensity);
+				ImGui::ColorPicker3("Light Color", (float*)&light.color);
+			}
+
+			if (ImGui::Button("Apply")) {
+				currentY = std::clamp(currentY, minY, maxY);
+				interpolation = std::clamp(interpolation, minInterpolate, maxInterpolate);
+				light.pos = glm::clamp(light.pos, minLightpos, maxLightpos);
+				light.color = glm::clamp(light.color, minColor, maxColor);
+				light.intensity = std::clamp(light.intensity, minIntensity, maxIntensity);
+				makeVulkan();
+			}
+		}
+		focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
+		ImGui::End();
+	}
 };

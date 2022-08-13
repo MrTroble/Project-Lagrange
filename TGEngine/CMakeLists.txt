@@ -106,7 +106,7 @@ target_include_directories(TGRenderTest PUBLIC "public")
 target_link_libraries(TGRenderTest PUBLIC TGEngine)
 
 
-add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp"  "application/TGAppDef.cpp")
+add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp"  "application/TGAppDef.cpp" "application/module/TGAppIO.cpp")
 target_include_directories(TGApp PUBLIC "public")
 target_link_libraries(TGApp PUBLIC TGEngine)
 

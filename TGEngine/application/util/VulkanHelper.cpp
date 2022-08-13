@@ -167,8 +167,12 @@ uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     actualInfos.push_back(renderInfo);
   }
   shader->bindData(infos.data(), infos.size());
-  if (actualInfos.size() > 0)
-    api->pushRender(actualInfos.size(), actualInfos.data(), offset);
+  if (actualInfos.size() > 0) {
+      api->pushRender(actualInfos.size(), actualInfos.data(), api->secondaryCommandBuffer.empty() ? 0:offset);
+  }
+  else {
+      api->secondaryCommandBuffer.clear();
+  }
   return bufferID;
 }
 
@@ -192,4 +196,6 @@ void makeVulkan() {
                                          shaderOffset, ioModul->mvpMatrix, 1);
   ioModul->binding = bufferPoolID;
   ioModul->sendChanges();
+
+  api->pushLights(1, &guiModul->light);
 }

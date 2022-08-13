@@ -1074,7 +1074,9 @@ namespace tge::graphics {
 			currentBuffer.beginRenderPass(renderPassBeginInfo,
 				SubpassContents::eSecondaryCommandBuffers);
 			const std::lock_guard onExitUnlock(commandBufferRecording);
-			currentBuffer.executeCommands(secondaryCommandBuffer);
+			if (!secondaryCommandBuffer.empty()) {
+				currentBuffer.executeCommands(secondaryCommandBuffer);
+			}
 
 			currentBuffer.nextSubpass(SubpassContents::eInline);
 
