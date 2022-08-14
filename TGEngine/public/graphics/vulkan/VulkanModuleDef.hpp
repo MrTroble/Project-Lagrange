@@ -33,6 +33,7 @@ public:
   Device device;
   SurfaceKHR surface;
   SurfaceFormatKHR format;
+  PresentModeKHR presentMode;
   Format depthFormat = Format::eUndefined;
   SwapchainKHR swapchain;
   std::vector<Image> swapchainImages;
@@ -65,11 +66,13 @@ public:
   std::vector<shader::ShaderPipe> shaderPipes;
   std::vector<CommandBuffer> primary = {CommandBuffer()};
 
+  size_t firstImage;
   size_t depthImage;
   size_t albedoImage;
   size_t normalImage;
   size_t roughnessMetallicImage;
   size_t position;
+  size_t attachmentCount;
 
   size_t lightData;
   size_t lightPipe;

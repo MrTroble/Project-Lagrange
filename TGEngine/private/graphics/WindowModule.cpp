@@ -63,6 +63,12 @@ namespace tge::graphics {
 		while (PeekMessage(&msg, wnd, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			if (msg.message == WM_SIZING) {
+				winModule->resizeMutex.lock();
+			}
+			else if (msg.message == WM_SIZE) {
+				winModule->resizeMutex.unlock();
+			}
 			for (const auto fun : winModule->customFn)
 				((WNDPROC)fun)(wnd, msg.message, msg.wParam, msg.lParam);
 		}
@@ -131,7 +137,10 @@ namespace tge::graphics {
 		return main::error;
 	}
 
-	void WindowModule::tick(double deltatime) {}
+	void WindowModule::tick(double deltatime) 
+	{
+		std::lock_guard lg(resizeMutex);
+	}
 
 	void WindowModule::destroy() {
 		this->closing = true;

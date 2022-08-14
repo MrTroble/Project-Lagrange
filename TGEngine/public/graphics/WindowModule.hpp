@@ -27,7 +27,8 @@ namespace tge::graphics {
 		bool closing = false;
 		std::thread osThread;
 		std::mutex osMutex;
-		std::mutex exitMutex;
+		std::mutex exitMutex;		
+		std::mutex resizeMutex;
 
 		main::Error init() override;
 

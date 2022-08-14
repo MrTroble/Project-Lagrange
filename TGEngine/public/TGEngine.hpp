@@ -16,6 +16,8 @@ Error start();
 
 Error lastError();
 
+void fireRecreate();
+
 graphics::APILayer *getAPILayer();
 
 graphics::GameGraphicsModule *getGameGraphicsModule();

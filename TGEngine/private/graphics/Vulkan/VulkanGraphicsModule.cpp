@@ -8,6 +8,7 @@
 #define VULKAN_HPP_HAS_SPACESHIP_OPERATOR
 #include "../../../public/graphics/vulkan/VulkanModuleDef.hpp"
 #include <unordered_set>
+#include "../../../public/TGEngine.hpp"
 
 namespace tge::graphics {
 
@@ -190,12 +191,13 @@ namespace tge::graphics {
 
 			if (!vertexBuffer.empty()) {
 				if (info.vertexOffsets.size() == 0) {
-					std::vector<size_t> offsets(vertexBuffer.size());
+					std::vector<DeviceSize> offsets(vertexBuffer.size());
 					std::fill(offsets.begin(), offsets.end(), 0);
 					cmdBuf.bindVertexBuffers(0, vertexBuffer, offsets);
 				}
 				else {
-					cmdBuf.bindVertexBuffers(0, vertexBuffer, info.vertexOffsets);
+					TGE_EXPECT_N(vertexBuffer.size() == info.vertexOffsets.size(), "Size is not equal!");
+					cmdBuf.bindVertexBuffers(0, vertexBuffer.size(), vertexBuffer.data(), (DeviceSize*)info.vertexOffsets.data());
 				}
 			}
 
@@ -663,6 +665,122 @@ namespace tge::graphics {
 		vgm->pipelines.push_back(gp.value);
 	}
 
+	inline void oneTimeWait(VulkanGraphicsModule* vgm, size_t count) {
+		const auto cmd = vgm->cmdbuffer.back();
+
+		const CommandBufferBeginInfo beginInfo(
+			CommandBufferUsageFlagBits::eOneTimeSubmit, {});
+		cmd.begin(beginInfo);
+
+		waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
+			vgm->textureImages[vgm->depthImage],
+			{ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 });
+
+		constexpr ImageSubresourceRange range = { ImageAspectFlagBits::eColor, 0, 1, 0,
+												 1 };
+		for (size_t i = vgm->firstImage + 1;
+			i < vgm->firstImage + count; i++) {
+			waitForImageTransition(cmd, ImageLayout::eUndefined,
+				ImageLayout::eSharedPresentKHR, vgm->textureImages[i],
+				range);
+		}
+
+		for (const auto& image : vgm->swapchainImages) {
+			waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
+				image, range);
+		}
+
+		cmd.end();
+		submitAndWait(vgm->device, vgm->queue, cmd);
+	}
+
+	inline void createSwapchain(VulkanGraphicsModule* vgm) {
+		vgm->device.waitIdle();
+
+		for (const auto frame : vgm->framebuffer) {
+			vgm->device.destroyFramebuffer(frame);
+		}
+		vgm->framebuffer.clear();
+
+		const auto capabilities = vgm->physicalDevice.getSurfaceCapabilitiesKHR(vgm->surface);
+		vgm->viewport = Viewport(0, 0, capabilities.currentExtent.width,
+			capabilities.currentExtent.height, 0, 1.0f);
+
+		const SwapchainCreateInfoKHR swapchainCreateInfo(
+			{}, vgm->surface, 3, vgm->format.format, vgm->format.colorSpace,
+			capabilities.currentExtent, 1, ImageUsageFlagBits::eColorAttachment,
+			SharingMode::eExclusive, 0, nullptr,
+			SurfaceTransformFlagBitsKHR::eIdentity,
+			CompositeAlphaFlagBitsKHR::eOpaque, vgm->presentMode, true, vgm->swapchain);
+
+		vgm->swapchain = vgm->device.createSwapchainKHR(swapchainCreateInfo);
+		vgm->swapchainImages = vgm->device.getSwapchainImagesKHR(vgm->swapchain);
+
+		const Extent2D ext = { (uint32_t)vgm->viewport.width, (uint32_t)vgm->viewport.height };
+		const std::vector<InternalImageInfo> intImageInfo = {
+			{vgm->depthFormat, ext, ImageUsageFlagBits::eDepthStencilAttachment},
+			{vgm->format.format, ext,
+			 ImageUsageFlagBits::eColorAttachment |
+				 ImageUsageFlagBits::eInputAttachment},
+			{Format::eR8G8B8A8Snorm, ext,
+			 ImageUsageFlagBits::eColorAttachment |
+				 ImageUsageFlagBits::eInputAttachment},
+			{Format::eR8G8B8A8Snorm, ext,
+			 ImageUsageFlagBits::eColorAttachment |
+				 ImageUsageFlagBits::eInputAttachment},
+			{Format::eR8G8B8A8Snorm, ext,
+			 ImageUsageFlagBits::eColorAttachment |
+				 ImageUsageFlagBits::eInputAttachment} };
+
+		vgm->firstImage = createInternalImages(vgm, intImageInfo);
+		vgm->depthImage = vgm->firstImage;
+		vgm->albedoImage = vgm->firstImage + 1;
+		vgm->normalImage = vgm->firstImage + 2;
+		vgm->roughnessMetallicImage = vgm->firstImage + 3;
+		vgm->position = vgm->firstImage + 4;
+
+		if(!vgm->cmdbuffer.empty())
+			oneTimeWait(vgm, intImageInfo.size());
+
+		vgm->swapchainImageviews.reserve(vgm->swapchainImages.size());
+		for (const auto view : vgm->swapchainImageviews) {
+			vgm->device.destroy(view);
+		}
+		vgm->swapchainImageviews.clear();
+
+		for (auto im : vgm->swapchainImages) {
+			const ImageViewCreateInfo imageviewCreateInfo(
+				{}, im, ImageViewType::e2D, vgm->format.format, ComponentMapping(),
+				ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+
+			const auto imview = vgm->device.createImageView(imageviewCreateInfo);
+			vgm->swapchainImageviews.push_back(imview);
+
+			std::vector<ImageView> images;
+			images.resize(vgm->attachmentCount);
+			std::copy(vgm->textureImageViews.begin() + vgm->firstImage,
+				vgm->textureImageViews.begin() + vgm->firstImage + images.size(),
+				images.begin());
+			images.back() = imview;
+
+			const FramebufferCreateInfo framebufferCreateInfo(
+				{}, vgm->renderpass, images, vgm->viewport.width, vgm->viewport.height, 1);
+			vgm->framebuffer.push_back(vgm->device.createFramebuffer(framebufferCreateInfo));
+		}
+	}
+
+	inline bool checkAndRecreate(VulkanGraphicsModule* vgm, const Result result) {
+		if (result == Result::eErrorOutOfDateKHR || result == Result::eSuboptimalKHR) {
+			createSwapchain(vgm);
+			tge::main::fireRecreate();
+			return true;
+		}
+		else {
+			VERROR(result);
+		}
+		return false;
+	}
+
 	main::Error VulkanGraphicsModule::init() {
 		this->shaderAPI = new VulkanShaderModule(this);
 #pragma region Instance
@@ -837,19 +955,6 @@ namespace tge::graphics {
 		const auto presentMode = *fndPresentMode;
 #pragma endregion
 
-#pragma region Swapchain
-		const SwapchainCreateInfoKHR swapchainCreateInfo(
-			{}, surface, 3, format.format, format.colorSpace,
-			capabilities.currentExtent, 1, ImageUsageFlagBits::eColorAttachment,
-			SharingMode::eExclusive, 0, nullptr,
-			SurfaceTransformFlagBitsKHR::eIdentity,
-			CompositeAlphaFlagBitsKHR::eOpaque, presentMode, true, nullptr);
-
-		swapchain = device.createSwapchainKHR(swapchainCreateInfo);
-
-		swapchainImages = device.getSwapchainImagesKHR(swapchain);
-#pragma endregion
-
 #pragma region Depth and Output Attachments
 		constexpr std::array potentialDepthFormat = {
 			Format::eD32Sfloat, Format::eD32SfloatS8Uint, Format::eD24UnormS8Uint,
@@ -864,28 +969,6 @@ namespace tge::graphics {
 		}
 		if (depthFormat == Format::eUndefined)
 			return main::Error::FORMAT_NOT_FOUND;
-		const Extent2D ext = { (uint32_t)viewport.width, (uint32_t)viewport.height };
-		const std::vector<InternalImageInfo> intImageInfo = {
-			{depthFormat, ext, ImageUsageFlagBits::eDepthStencilAttachment},
-			{format.format, ext,
-			 ImageUsageFlagBits::eColorAttachment |
-				 ImageUsageFlagBits::eInputAttachment},
-			{Format::eR8G8B8A8Snorm, ext,
-			 ImageUsageFlagBits::eColorAttachment |
-				 ImageUsageFlagBits::eInputAttachment},
-			{Format::eR8G8B8A8Snorm, ext,
-			 ImageUsageFlagBits::eColorAttachment |
-				 ImageUsageFlagBits::eInputAttachment},
-			{Format::eR8G8B8A8Snorm, ext,
-			 ImageUsageFlagBits::eColorAttachment |
-				 ImageUsageFlagBits::eInputAttachment} };
-
-		const auto imageFirstIndex = createInternalImages(this, intImageInfo);
-		depthImage = imageFirstIndex;
-		albedoImage = imageFirstIndex + 1;
-		normalImage = imageFirstIndex + 2;
-		roughnessMetallicImage = imageFirstIndex + 3;
-		position = imageFirstIndex + 4;
 #pragma endregion
 
 #pragma region Renderpass
@@ -902,17 +985,17 @@ namespace tge::graphics {
 				AttachmentStoreOp::eDontCare, ImageLayout::eUndefined,
 				ImageLayout::eSharedPresentKHR),
 			AttachmentDescription(
-				{}, intImageInfo[2].format, SampleCountFlagBits::e1,
+				{}, Format::eR8G8B8A8Snorm, SampleCountFlagBits::e1,
 				AttachmentLoadOp::eClear, AttachmentStoreOp::eDontCare,
 				AttachmentLoadOp::eDontCare, AttachmentStoreOp::eDontCare,
 				ImageLayout::eUndefined, ImageLayout::eSharedPresentKHR),
 			AttachmentDescription(
-				{}, intImageInfo[3].format, SampleCountFlagBits::e1,
+				{}, Format::eR8G8B8A8Snorm, SampleCountFlagBits::e1,
 				AttachmentLoadOp::eClear, AttachmentStoreOp::eDontCare,
 				AttachmentLoadOp::eDontCare, AttachmentStoreOp::eDontCare,
 				ImageLayout::eUndefined, ImageLayout::eSharedPresentKHR),
 			AttachmentDescription(
-				{}, intImageInfo[4].format, SampleCountFlagBits::e1,
+				{}, Format::eR8G8B8A8Snorm, SampleCountFlagBits::e1,
 				AttachmentLoadOp::eClear, AttachmentStoreOp::eDontCare,
 				AttachmentLoadOp::eDontCare, AttachmentStoreOp::eDontCare,
 				ImageLayout::eUndefined, ImageLayout::eSharedPresentKHR),
@@ -921,6 +1004,7 @@ namespace tge::graphics {
 				AttachmentStoreOp::eStore, AttachmentLoadOp::eDontCare,
 				AttachmentStoreOp::eDontCare, ImageLayout::eUndefined,
 				ImageLayout::ePresentSrcKHR) };
+		attachmentCount = attachments.size();
 
 		constexpr std::array colorAttachments = {
 			AttachmentReference(1, ImageLayout::eColorAttachmentOptimal),
@@ -968,63 +1052,14 @@ namespace tge::graphics {
 #pragma endregion
 
 #pragma region CommandBuffer
-		swapchainImageviews.reserve(swapchainImages.size());
-
 		const CommandPoolCreateInfo commandPoolCreateInfo(
 			CommandPoolCreateFlagBits::eResetCommandBuffer, queueIndex);
 		pool = device.createCommandPool(commandPoolCreateInfo);
 
 		const CommandBufferAllocateInfo cmdBufferAllocInfo(
-			pool, CommandBufferLevel::ePrimary, (uint32_t)swapchainImages.size() + 1);
+			pool, CommandBufferLevel::ePrimary, (uint32_t)4);
 		cmdbuffer = device.allocateCommandBuffers(cmdBufferAllocInfo);
-
-		const auto cmd = cmdbuffer.back();
-
-		const CommandBufferBeginInfo beginInfo(
-			CommandBufferUsageFlagBits::eOneTimeSubmit, {});
-		cmd.begin(beginInfo);
-
-		waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
-			textureImages[depthImage],
-			{ ImageAspectFlagBits::eDepth, 0, 1, 0, 1 });
-
-		constexpr ImageSubresourceRange range = { ImageAspectFlagBits::eColor, 0, 1, 0,
-												 1 };
-		for (size_t i = imageFirstIndex + 1;
-			i < imageFirstIndex + intImageInfo.size(); i++) {
-			waitForImageTransition(cmd, ImageLayout::eUndefined,
-				ImageLayout::eSharedPresentKHR, textureImages[i],
-				range);
-		}
-
-		for (const auto& image : swapchainImages) {
-			waitForImageTransition(cmd, ImageLayout::eUndefined, ImageLayout::eGeneral,
-				image, range);
-		}
-
-		cmd.end();
-		submitAndWait(device, queue, cmd);
-#pragma endregion
-
-#pragma region ImageViews and Framebuffer
-		for (auto im : swapchainImages) {
-			const ImageViewCreateInfo imageviewCreateInfo(
-				{}, im, ImageViewType::e2D, format.format, ComponentMapping(),
-				ImageSubresourceRange(ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-
-			const auto imview = device.createImageView(imageviewCreateInfo);
-			swapchainImageviews.push_back(imview);
-
-			std::array<ImageView, attachments.size()> images;
-			std::copy(textureImageViews.begin() + imageFirstIndex,
-				textureImageViews.begin() + imageFirstIndex + intImageInfo.size(),
-				images.begin());
-			images.back() = imview;
-
-			const FramebufferCreateInfo framebufferCreateInfo(
-				{}, renderpass, images, viewport.width, viewport.height, 1);
-			framebuffer.push_back(device.createFramebuffer(framebufferCreateInfo));
-		}
+		createSwapchain(this);
 #pragma endregion
 
 #pragma region Vulkan Mutex
@@ -1111,14 +1146,17 @@ namespace tge::graphics {
 		const PresentInfoKHR presentInfo(signalSemaphore, swapchain, this->nextImage,
 			nullptr);
 		const Result result = queue.presentKHR(&presentInfo);
-		if (result == Result::eErrorOutOfDateKHR) {
-			exitFailed = true;
-			return;
-		}
 		if (result == Result::eErrorInitializationFailed) {
 			printf("For some reasone NV drivers seem to be hitting this error!");
 		}
-		VERROR(result);
+		if (checkAndRecreate(this, result)) {
+			currentBuffer.reset();
+			device.resetFences(commandBufferFence);
+			auto nextimage =
+				device.acquireNextImageKHR(swapchain, UINT64_MAX, waitSemaphore, {});
+			this->nextImage = nextimage.value;
+			return;
+		}
 
 		const Result waitresult =
 			device.waitForFences(commandBufferFence, true, UINT64_MAX);
@@ -1127,10 +1165,13 @@ namespace tge::graphics {
 		currentBuffer.reset();
 		device.resetFences(commandBufferFence);
 
-		auto nextimage =
-			device.acquireNextImageKHR(swapchain, UINT64_MAX, waitSemaphore, {});
-		VERROR(nextimage.result);
-		this->nextImage = nextimage.value;
+		while (true) {
+			auto nextimage =
+				device.acquireNextImageKHR(swapchain, UINT64_MAX, waitSemaphore, {});
+			this->nextImage = nextimage.value;
+			if (!checkAndRecreate(this, nextimage.result))
+				break;
+		}
 	}
 
 	void VulkanGraphicsModule::destroy() {

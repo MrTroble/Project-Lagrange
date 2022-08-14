@@ -14,6 +14,12 @@ graphics::APILayer *usedApiLayer = nullptr;
 graphics::GameGraphicsModule *gameModule = nullptr;
 graphics::WindowModule *winModule = nullptr;
 
+void fireRecreate() {
+    for (Module* modul : modules) {
+        modul->recreate();
+    }
+}
+
 Error init() {
   if (isInitialized)
     return error = Error::ALREADY_INITIALIZED;

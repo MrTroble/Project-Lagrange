@@ -52,4 +52,10 @@ public:
 		focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 		ImGui::End();
 	}
+
+	void recreate() override {
+		tge::gui::GUIModule::recreate();
+		makeVulkan();
+	}
+
 };

@@ -13,6 +13,8 @@ public:
   virtual void tick(double deltatime) {}
 
   virtual void destroy() {}
+
+  virtual void recreate() {}
 };
 
 } // namespace tge::main
