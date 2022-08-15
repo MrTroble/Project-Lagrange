@@ -75,7 +75,7 @@ public:
   size_t attachmentCount;
 
   size_t lightData;
-  size_t lightPipe;
+  size_t lightPipe = UINT32_MAX;
   size_t lightBindings;
   Material lightMat;
 

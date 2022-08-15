@@ -582,6 +582,33 @@ namespace tge::graphics {
 	}
 #endif
 
+	inline void updateDescriptors(VulkanGraphicsModule* vgm, shader::ShaderAPI* sapi) {
+
+		const std::array bindingInfos = {
+	BindingInfo{0,
+				vgm->lightBindings,
+				BindingType::InputAttachment,
+				{vgm->albedoImage,  UINT64_MAX}},
+	BindingInfo{1,
+				vgm->lightBindings,
+				BindingType::InputAttachment,
+				{vgm->normalImage, UINT64_MAX}},
+	BindingInfo{2,
+				vgm->lightBindings,
+				BindingType::InputAttachment,
+				{vgm->roughnessMetallicImage, UINT64_MAX}},
+	BindingInfo{3,
+				vgm->lightBindings,
+				BindingType::InputAttachment,
+				{vgm->position, UINT64_MAX}},
+	BindingInfo{4,
+				vgm->lightBindings,
+				BindingType::UniformBuffer,
+				{vgm->lightData, VK_WHOLE_SIZE, 0}} };
+
+		sapi->bindData(bindingInfos.data(), bindingInfos.size());
+	}
+
 	inline void createLightPass(VulkanGraphicsModule* vgm) {
 
 		const auto sapi = vgm->getShaderAPI();
@@ -595,29 +622,7 @@ namespace tge::graphics {
 		auto sizeOfLight = sizeof(vgm->lights);
 		vgm->lightData = vgm->pushData(1, &ptr, &sizeOfLight, DataType::Uniform);
 
-		const std::array bindingInfos = {
-			BindingInfo{0,
-						vgm->lightBindings,
-						BindingType::InputAttachment,
-						{vgm->albedoImage, UINT64_MAX}},
-			BindingInfo{1,
-						vgm->lightBindings,
-						BindingType::InputAttachment,
-						{vgm->normalImage, UINT64_MAX}},
-			BindingInfo{2,
-						vgm->lightBindings,
-						BindingType::InputAttachment,
-						{vgm->roughnessMetallicImage, UINT64_MAX}},
-			BindingInfo{3,
-						vgm->lightBindings,
-						BindingType::InputAttachment,
-						{vgm->position, UINT64_MAX}},
-			BindingInfo{4,
-						vgm->lightBindings,
-						BindingType::UniformBuffer,
-						{vgm->lightData, VK_WHOLE_SIZE, 0}} };
-
-		sapi->bindData(bindingInfos.data(), bindingInfos.size());
+		updateDescriptors(vgm, sapi);
 
 		for (const auto& shaderPair : pipe->shader) {
 			const auto& shaderData = shaderPair.first;
@@ -739,13 +744,12 @@ namespace tge::graphics {
 		vgm->roughnessMetallicImage = vgm->firstImage + 3;
 		vgm->position = vgm->firstImage + 4;
 
-		if(!vgm->cmdbuffer.empty())
-			oneTimeWait(vgm, intImageInfo.size());
+		oneTimeWait(vgm, intImageInfo.size());
 
-		vgm->swapchainImageviews.reserve(vgm->swapchainImages.size());
 		for (const auto view : vgm->swapchainImageviews) {
 			vgm->device.destroy(view);
 		}
+		vgm->swapchainImageviews.reserve(vgm->attachmentCount);
 		vgm->swapchainImageviews.clear();
 
 		for (auto im : vgm->swapchainImages) {
@@ -766,6 +770,10 @@ namespace tge::graphics {
 			const FramebufferCreateInfo framebufferCreateInfo(
 				{}, vgm->renderpass, images, vgm->viewport.width, vgm->viewport.height, 1);
 			vgm->framebuffer.push_back(vgm->device.createFramebuffer(framebufferCreateInfo));
+		}
+		if (vgm->lightPipe != UINT32_MAX) {
+			const auto sapi = vgm->getShaderAPI();
+			updateDescriptors(vgm, sapi);
 		}
 	}
 
