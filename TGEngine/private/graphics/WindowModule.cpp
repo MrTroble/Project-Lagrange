@@ -94,10 +94,8 @@ namespace tge::graphics {
 
 		const auto windowProperties = winModule->getWindowProperties();
 
-		XSetWindowAttributes attr{};
-
-		winModule->hWnd = (void*)XCreateWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
-			windowProperties.height, 0, CopyFromParent, InputOutput, CopyFromParent, 0, &attr);
+		winModule->hWnd = (void*)XCreateSimpleWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
+			windowProperties.height, 1, 1, 1);
 		if (!winModule->hWnd)
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 
