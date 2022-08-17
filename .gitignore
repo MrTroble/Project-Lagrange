@@ -305,3 +305,4 @@ dependencies/deps.zip
 /TGEngine/conanbuildinfo.txt
 /TGEngine/conan.lock
 /build
+.vscode/settings.json
