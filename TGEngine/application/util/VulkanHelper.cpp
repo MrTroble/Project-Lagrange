@@ -37,7 +37,7 @@ permute::lookup glslLookup = {{"next", next}};
 
 std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
-                  tge::shader::VulkanShaderModule *shader) {
+                  tge::shader::VulkanShaderModule *shader, const CreateInfo& createInfo) {
 
   glslang::InitializeProcess();
   util::OnExit exitHandle(&glslang::FinalizeProcess);
@@ -108,6 +108,7 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     shaderpipe->layoutID = shader->pipeLayouts.size() - 1;
     material[i].costumShaderData = shaderpipe;
     material[i].primitiveType = (uint32_t)PrimitiveTopology::eTriangleFan;
+    material[i].doubleSided = createInfo.doubleSided;
     shaderpipe->needsDefaultBindings = false;
     shader->createBindings(shaderpipe, 1);
   }
@@ -190,8 +191,10 @@ void makeVulkan() {
     api->bufferMemoryList[i] = VK_NULL_HANDLE;
     api->bufferList[i] = VK_NULL_HANDLE;
   }
-
-  const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
+   
+  CreateInfo createInfo;
+  createInfo.doubleSided = guiModul->doubleSided;
+  const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader, createInfo);
   const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
                                          shaderOffset, ioModul->mvpMatrix, 1);
   ioModul->binding = bufferPoolID;

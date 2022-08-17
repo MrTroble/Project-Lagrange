@@ -10,9 +10,13 @@ using namespace tge::main;
 using namespace tge::graphics;
 using namespace tge;
 
+struct CreateInfo {
+    bool doubleSided = false;
+};
+
 std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
-                  tge::shader::VulkanShaderModule *shader);
+                  tge::shader::VulkanShaderModule *shader, const CreateInfo& createInfo);
 
 uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                       tge::shader::VulkanShaderModule *shader,

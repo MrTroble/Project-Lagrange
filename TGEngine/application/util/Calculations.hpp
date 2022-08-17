@@ -216,7 +216,7 @@ inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 #ifdef DEBUG
 			for (const auto& info : interpolations) {
 				if (unorderedSet.contains(info)) {
-					printf("C: %d\n", c);
+					printf("C: %ld\n", c);
 				}
 			}
 			unorderedSet.insert(begin(interpolations), end(interpolations));

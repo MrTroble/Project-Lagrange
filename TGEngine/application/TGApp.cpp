@@ -45,7 +45,8 @@ int main(const int count, const char** strings) {
 	const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
 	ioModul->implTrans = vec;
 
-	const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader);
+	const CreateInfo info = {guiModul->doubleSided};
+	const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader, info);
 	const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
 		shaderOffset, ioModul->mvpMatrix);
 	ioModul->binding = bufferPoolID;

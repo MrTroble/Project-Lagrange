@@ -27,8 +27,9 @@ public:
 	int interpolation = 4;
 	Light light;
 	bool focused = false;
+	bool doubleSided = false;
 
-	void renderGUI() {
+	void renderGUI() override {
 		if (ImGui::Begin("test")) {
 			ImGui::SliderFloat("Y", &currentY, minY, maxY);
 			ImGui::SliderInt("Interpolation", &interpolation, minInterpolate,
@@ -38,6 +39,10 @@ public:
 				ImGui::SliderFloat3("Light Position", (float*)&light.pos, minLightpos.x, maxLightpos.x);
 				ImGui::SliderFloat("Light Intensity", (float*)&light.intensity, minIntensity, maxIntensity);
 				ImGui::ColorPicker3("Light Color", (float*)&light.color);
+			}
+
+			if (ImGui::CollapsingHeader("Render")) {
+				ImGui::Checkbox("Double sided", &this->doubleSided);
 			}
 
 			if (ImGui::Button("Apply")) {
