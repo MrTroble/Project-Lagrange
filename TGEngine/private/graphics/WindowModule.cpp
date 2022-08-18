@@ -93,8 +93,18 @@ namespace tge::graphics
 #ifdef __linux__
 	typedef int (*WNDPROC)(XEvent &ev);
 
-	main::Error init(WindowModule *winModule)
+	int errorHandle(Display *display, XErrorEvent *event)
 	{
+		std::array<char, 200> str;
+		XGetErrorText(display, event->error_code, str.data(), str.size());
+		printf("%s\n", str.data());
+		return 1;
+	}
+
+	main::Error init(WindowModule *winModule)
+	{   
+		XInitThreads();
+		XSetErrorHandler(&errorHandle);
 		winModule->hInstance = XOpenDisplay(NULL);
 		if (!winModule->hInstance)
 			return main::Error::NO_MODULE_HANDLE;
@@ -104,15 +114,22 @@ namespace tge::graphics
 			return main::Error::NO_MODULE_HANDLE;
 
 		const auto windowProperties = winModule->getWindowProperties();
+		const auto screen_num = DefaultScreen(display);
+		const auto color = WhitePixel(winModule->hInstance, screen_num);
 
 		winModule->hWnd = (void *)XCreateSimpleWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
-													  windowProperties.height, 1, 1, 1);
+													  windowProperties.height, 4, color, color);
 		if (!winModule->hWnd)
 			return main::Error::COULD_NOT_CREATE_WINDOW;
+		const auto window = (Window)winModule->hWnd;
 
-		XMapWindow(display, (Window)winModule->hWnd);
-		XStoreName(display, (Window)winModule->hWnd, APPLICATION_NAME);
-		XSelectInput(display, (Window)winModule->hWnd, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | FocusChangeMask);
+		const auto result = XSelectInput(display, window, ButtonPressMask | ButtonReleaseMask | KeyPressMask | PointerMotionMask | KeyReleaseMask | FocusChangeMask);
+		if (!result)
+			return main::Error::COULD_NOT_CREATE_WINDOW;
+		if (!XStoreName(display, window, APPLICATION_NAME))
+			return main::Error::COULD_NOT_CREATE_WINDOW;
+		if (!XMapWindow(display, window))
+			return main::Error::COULD_NOT_CREATE_WINDOW;
 		return tge::main::Error::NONE;
 	}
 
