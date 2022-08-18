@@ -11,10 +11,9 @@
 #endif
 #ifdef __linux__
 #include "../../public/imgui/imgui_impl_x11.h"
+extern IMGUI_IMPL_API int ImGui_ImplX11_EventHandler(XEvent &event);
 #endif
 #include <imgui.h>
-
-extern IMGUI_IMPL_API int ImGui_ImplX11_EventHandler(XEvent &event);
 
 namespace tge::gui
 {
@@ -72,12 +71,13 @@ namespace tge::gui
 		(void)io;
 		ImGui::StyleColorsDark();
 #ifdef WIN32
-		winModule->customFn.push_back((void *)ImGui_ImplWin32_WndProcHandler);
+		winModule->customFn.push_back((void *)&ImGui_ImplWin32_WndProcHandler);
 		const bool winInit = ImGui_ImplWin32_Init(winModule->hWnd);
 		if (!winInit)
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 #endif
 #ifdef __linux__
+		winModule->customFn.push_back((void *)&ImGui_ImplX11_EventHandler);
 		if (!ImGui_ImplX11_Init(winModule->hInstance, winModule->hWnd))
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 #endif

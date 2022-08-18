@@ -7,22 +7,26 @@
 #include <Windows.h>
 #endif
 #ifdef __linux__
-#include<X11/X.h>
-#include<X11/Xlib.h>
+#include <X11/X.h>
+#include <X11/Xlib.h>
 #endif
 
-namespace tge::graphics {
+namespace tge::graphics
+{
 
 #ifdef WIN32
-	LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
-		if (Msg == WM_CLOSE) {
+	LRESULT CALLBACK callback(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (Msg == WM_CLOSE)
+		{
 			util::requestExit();
 			return 0;
 		}
 		return DefWindowProc(hWnd, Msg, wParam, lParam);
 	}
 
-	main::Error init(WindowModule* winModule) {
+	main::Error init(WindowModule *winModule)
+	{
 		HMODULE systemHandle = GetModuleHandle(nullptr);
 		if (!systemHandle)
 			return main::Error::NO_MODULE_HANDLE;
@@ -39,7 +43,8 @@ namespace tge::graphics {
 		wndclass.lpszClassName = ENGINE_NAME;
 
 		auto regWndClass = RegisterClassEx(&wndclass);
-		if (!regWndClass) {
+		if (!regWndClass)
+		{
 			if (GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
 				return main::Error::COULD_NOT_CREATE_WINDOW_CLASS;
 		}
@@ -57,16 +62,20 @@ namespace tge::graphics {
 		return main::Error::NONE;
 	}
 
-	void pool(WindowModule* winModule) {
+	void pool(WindowModule *winModule)
+	{
 		MSG msg;
 		const HWND wnd = (HWND)winModule->hWnd;
-		while (PeekMessage(&msg, wnd, 0, 0, PM_REMOVE)) {
+		while (PeekMessage(&msg, wnd, 0, 0, PM_REMOVE))
+		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			if (msg.message == WM_SIZING) {
+			if (msg.message == WM_SIZING)
+			{
 				winModule->resizeMutex.lock();
 			}
-			else if (msg.message == WM_SIZE) {
+			else if (msg.message == WM_SIZE)
+			{
 				winModule->resizeMutex.unlock();
 			}
 			for (const auto fun : winModule->customFn)
@@ -74,78 +83,75 @@ namespace tge::graphics {
 		}
 	}
 
-	void destroy(WindowModule* winModule) {
+	void destroy(WindowModule *winModule)
+	{
 		DestroyWindow((HWND)winModule->hWnd);
 	}
 
 #endif // WIN32
 
 #ifdef __linux__
-	typedef void(*WNDPROC)(XEvent* ev);
+	typedef int (*WNDPROC)(XEvent &ev);
 
-	main::Error init(WindowModule* winModule) {
+	main::Error init(WindowModule *winModule)
+	{
 		winModule->hInstance = XOpenDisplay(NULL);
 		if (!winModule->hInstance)
 			return main::Error::NO_MODULE_HANDLE;
-		Display* display = (Display*)winModule->hInstance;
+		Display *display = (Display *)winModule->hInstance;
 		const auto root = DefaultRootWindow(display);
 		if (!root)
 			return main::Error::NO_MODULE_HANDLE;
 
 		const auto windowProperties = winModule->getWindowProperties();
 
-		winModule->hWnd = (void*)XCreateSimpleWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
-			windowProperties.height, 1, 1, 1);
+		winModule->hWnd = (void *)XCreateSimpleWindow(display, root, windowProperties.x, windowProperties.y, windowProperties.width,
+													  windowProperties.height, 1, 1, 1);
 		if (!winModule->hWnd)
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 
 		XMapWindow(display, (Window)winModule->hWnd);
 		XStoreName(display, (Window)winModule->hWnd, APPLICATION_NAME);
+		XSelectInput(display, (Window)winModule->hWnd, MotionNotify | KeyPress | KeyRelease);
 		return tge::main::Error::NONE;
 	}
 
-	void pool(WindowModule* winModule) {
+	void pool(WindowModule *winModule)
+	{
+		const auto display = (Display *)winModule->hInstance;
+		if (!XPending(display))
+			return;
 		XEvent xev;
-		XNextEvent((Display*)winModule->hInstance, &xev);
+		XNextEvent(display, &xev);
 		for (const auto fun : winModule->customFn)
-			((WNDPROC)fun)(&xev);
+			((WNDPROC)fun)(xev);
 	}
 
-	void destroy(WindowModule* winModule) {
-		XDestroyWindow((Display*)winModule->hInstance, (Window)winModule->hWnd);
-		XCloseDisplay((Display*)winModule->hInstance);
+	void destroy(WindowModule *winModule)
+	{
+		XDestroyWindow((Display *)winModule->hInstance, (Window)winModule->hWnd);
+		XCloseDisplay((Display *)winModule->hInstance);
 	}
 #endif
 
-	main::Error WindowModule::init() {
-		osThread = std::thread([winM = this] {
-			winM->osMutex.lock();
-			main::error = tge::graphics::init(winM);
-			if (main::error != tge::main::Error::NONE)
-				return;
-			winM->osMutex.unlock();
-			std::lock_guard lg2(winM->exitMutex);
-			while (!winM->closing) {
-				tge::graphics::pool(winM);
-			}
-			tge::graphics::destroy(winM);
-			});
-		osThread.detach();
-		std::lock_guard lg(this->osMutex);
-		return main::error;
-	}
-
-	void WindowModule::tick(double deltatime) 
+	main::Error WindowModule::init()
 	{
-		std::lock_guard lg(resizeMutex);
+		return tge::graphics::init(this);
 	}
 
-	void WindowModule::destroy() {
+	void WindowModule::tick(double deltatime)
+	{
+		tge::graphics::pool(this);
+	}
+
+	void WindowModule::destroy()
+	{
 		this->closing = true;
-		std::lock_guard lg(this->exitMutex);
+		tge::graphics::destroy(this);
 	}
 
-	WindowProperties WindowModule::getWindowProperties() {
+	WindowProperties WindowModule::getWindowProperties()
+	{
 		return WindowProperties();
 	}
 
