@@ -7,17 +7,16 @@
 //  [X] Platform: Keyboard arrays indexed using XK_* Virtual Key Codes, e.g. ImGui::IsKeyPressed(XK_space).
 //  [ ] Platform: Gamepad support. Enabled with 'io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad'.
 
+// Implementation from https://github.com/Nemirtingas/imgui
+
 #pragma once
+#define IMGUI_IMPL_X11_DISABLE_GAMEPAD 1
 
 #include <imgui.h>
 
 IMGUI_IMPL_API bool     ImGui_ImplX11_Init(void* display, void* window);
 IMGUI_IMPL_API void     ImGui_ImplX11_Shutdown();
 IMGUI_IMPL_API bool     ImGui_ImplX11_NewFrame();
-
-// Configuration
-// - Disable gamepad support
-#define IMGUI_IMPL_X11_DISABLE_GAMEPAD
 
 // X11 message handler your application need to call.
 // - Intentionally commented out in a '#if 0' block to avoid dragging dependencies on <X11/*> from this helper.

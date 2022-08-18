@@ -316,6 +316,7 @@ bool    ImGui_ImplX11_NewFrame()
 
     // Update game controllers (if enabled and available)
     ImGui_ImplX11_UpdateGamepads();
+    return true;
 }
 
 // Map XK_xxx to ImGuiKey_xxx.

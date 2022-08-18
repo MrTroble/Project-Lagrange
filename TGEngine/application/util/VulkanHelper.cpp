@@ -112,8 +112,7 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     shaderpipe->needsDefaultBindings = false;
     shader->createBindings(shaderpipe, 1);
   }
-  glslang::FinalizeProcess();
-
+  
   return {api->pushMaterials(material.size(), material.data()), beginShader};
 }
 
