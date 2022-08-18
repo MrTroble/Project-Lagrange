@@ -71,12 +71,14 @@ namespace tge::io
       if (event.xbutton.button == Button4)
       {
         for (const auto io : ios)
-          io->mouseEvent({1, 1, (int)tge::io::SCROLL});
+          io->mouseEvent({500, 500, (int)tge::io::SCROLL});
+        return 0;
       }
       else if (event.xbutton.button == Button5)
       {
         for (const auto io : ios)
-          io->mouseEvent({1, 1, (int)tge::io::SCROLL});
+          io->mouseEvent({-500, -500, (int)tge::io::SCROLL});
+        return 0;
       }
       const auto xParam = event.xbutton.x;
       const auto yParam = event.xbutton.y;
@@ -92,8 +94,10 @@ namespace tge::io
     }
     case KeyPress:
     {
+      const auto sym = XLookupKeysym(&event.xkey, 0);
+      const auto name = std::toupper(*XKeysymToString(sym));
       for (const auto io : ios)
-        io->keyboardEvent({(uint32_t)event.xkey.keycode});
+        io->keyboardEvent({(uint32_t)name});
       break;
     }
     }

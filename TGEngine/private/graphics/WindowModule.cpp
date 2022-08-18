@@ -102,9 +102,9 @@ namespace tge::graphics
 	}
 
 	main::Error init(WindowModule *winModule)
-	{   
-		XInitThreads();
+	{
 		XSetErrorHandler(&errorHandle);
+		XInitThreads();
 		winModule->hInstance = XOpenDisplay(NULL);
 		if (!winModule->hInstance)
 			return main::Error::NO_MODULE_HANDLE;
@@ -123,8 +123,7 @@ namespace tge::graphics
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 		const auto window = (Window)winModule->hWnd;
 
-		const auto result = XSelectInput(display, window, ButtonPressMask | ButtonReleaseMask | KeyPressMask | PointerMotionMask | KeyReleaseMask | FocusChangeMask);
-		if (!result)
+		if (!XSelectInput(display, window, ButtonPressMask | ButtonReleaseMask | KeyPressMask | PointerMotionMask | KeyReleaseMask | StructureNotifyMask | FocusChangeMask))
 			return main::Error::COULD_NOT_CREATE_WINDOW;
 		if (!XStoreName(display, window, APPLICATION_NAME))
 			return main::Error::COULD_NOT_CREATE_WINDOW;
@@ -140,6 +139,10 @@ namespace tge::graphics
 		{
 			XEvent xev;
 			XNextEvent(display, &xev);
+			if (xev.type == DestroyNotify)
+			{
+				winModule->closeRequest = true;
+			}
 			for (const auto fun : winModule->customFn)
 				((WNDPROC)fun)(xev);
 		}
