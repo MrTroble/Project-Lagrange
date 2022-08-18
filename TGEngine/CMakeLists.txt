@@ -28,6 +28,12 @@ FETCHCONTENT_DECLARE(
 )
 
 FETCHCONTENT_DECLARE(
+	glm
+	GIT_REPOSITORY https://github.com/g-truc/glm/
+	GIT_TAG 0.9.9.8
+)
+
+FETCHCONTENT_DECLARE(
 	imgui
 	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.83.zip
 )
@@ -36,7 +42,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FETCHCONTENT_MAKEAVAILABLE(googletest)
 FETCHCONTENT_MAKEAVAILABLE(vulkansdk)
 FETCHCONTENT_MAKEAVAILABLE(imgui)
-include_directories("${vulkansdk_SOURCE_DIR}/Include" "${vulkansdk_SOURCE_DIR}/Third-Party/Include" "${imgui_SOURCE_DIR}")
+FETCHCONTENT_MAKEAVAILABLE(glm)
 
 set(ENGINE_DATA   
 	"public/TGEngine.hpp"
@@ -77,20 +83,23 @@ set(ENGINE_DATA
 	"${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp"
     "${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.h"
 )
-if(WIN32)  
-link_directories("${vulkansdk_SOURCE_DIR}/Lib" "${vulkansdk_SOURCE_DIR}/Third-Party/Bin")
+if(WIN32)
+include_directories("${vulkansdk_SOURCE_DIR}/Include" "${imgui_SOURCE_DIR}")
+link_directories("${vulkansdk_SOURCE_DIR}/Lib")
 list(APPEND 	
     "${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp"
 	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.h"
 )
+else()
+include_directories("usr/include" "${imgui_SOURCE_DIR}")
 endif()
 
 add_library (TGEngine STATIC ${ENGINE_DATA})
-target_link_libraries(TGEngine PUBLIC glslang shaderc_combined)
+target_link_libraries(TGEngine PUBLIC glslang shaderc_combined SPIRV glm)
 if(WIN32)
 target_link_libraries(TGEngine PUBLIC vulkan-1)
 else()
-target_link_libraries(TGEngine PUBLIC vulkan m ${X11_X11_LIB})
+target_link_libraries(TGEngine PUBLIC glslang-default-resource-limits vulkan m ${X11_X11_LIB})
 endif()
 
 add_executable(TGEngineTest "test/TGTest.cpp")

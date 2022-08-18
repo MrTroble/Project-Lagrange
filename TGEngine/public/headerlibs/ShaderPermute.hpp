@@ -522,7 +522,7 @@ public:
       shader->setEnvClient(settings.targetClient, settings.targetVersion);
       shader->setEnvTarget(settings.targetLanguage,
                            settings.targetLanguageVersion);
-      if (!shader->parse(&defaultTBuiltInResource, 460, true,
+      if (!shader->parse(&defaultTBuiltInResource, 450, EProfile::ENoProfile, false, false,
                          EShMessages::EShMsgVulkanRules)) {
         return {{shader->getInfoLog()}, OutputType::ERROR};
       }
