@@ -50,6 +50,9 @@ namespace tge::io
 #endif
 
 #ifdef __linux__
+
+  int lastButton = 0;
+
   int callback(XEvent &event)
   {
     switch (event.type)
@@ -59,7 +62,38 @@ namespace tge::io
       const auto xParam = event.xmotion.x;
       const auto yParam = event.xmotion.y;
       for (const auto io : ios)
-        io->mouseEvent({xParam, yParam, (int)event.xmotion.state});
+        io->mouseEvent({xParam, yParam, (int)lastButton});
+      break;
+    }
+    case ButtonPress:
+    {
+      printf("%d\n", event.xbutton.button);
+      if (event.xbutton.button == Button4)
+      {
+        for (const auto io : ios)
+          io->mouseEvent({1, 1, (int)tge::io::SCROLL});
+      }
+      else if (event.xbutton.button == Button5)
+      {
+        for (const auto io : ios)
+          io->mouseEvent({1, 1, (int)tge::io::SCROLL});
+      }
+      const auto xParam = event.xbutton.x;
+      const auto yParam = event.xbutton.y;
+      lastButton = event.xbutton.button;
+      for (const auto io : ios)
+        io->mouseEvent({xParam, yParam, (int)lastButton});
+      break;
+    }
+    case ButtonRelease:
+    {
+      lastButton = 0;
+      break;
+    }
+    case KeyPress:
+    {
+      for (const auto io : ios)
+        io->keyboardEvent({(uint32_t)event.xkey.keycode});
       break;
     }
     }

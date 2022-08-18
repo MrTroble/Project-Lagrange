@@ -82,6 +82,7 @@ public:
 	}
 
 	void keyboardEvent(const tge::io::KeyboardEvent event) override {
+		printf("%d\n", event.signal);
 		if (event.signal == 'W') {
 			wState = true;
 		}

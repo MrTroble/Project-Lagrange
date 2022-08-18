@@ -4,7 +4,7 @@ project ("TGEngine" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-add_compile_definitions(ENGINE_NAME="TGEngine" ENGINE_VERSION=8388608 APPLICATION_NAME="TGEngineTest" DEBUG)
+add_compile_definitions(ENGINE_NAME="TGEngine" ENGINE_VERSION=8388608 APPLICATION_NAME="Langrange Viewer" DEBUG)
 
 if(WIN32)  
 add_compile_options("/D_ITERATOR_DEBUG_LEVEL=0" "/MD" "/EHa")

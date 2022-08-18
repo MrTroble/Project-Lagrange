@@ -112,19 +112,20 @@ namespace tge::graphics
 
 		XMapWindow(display, (Window)winModule->hWnd);
 		XStoreName(display, (Window)winModule->hWnd, APPLICATION_NAME);
-		XSelectInput(display, (Window)winModule->hWnd, MotionNotify | KeyPress | KeyRelease);
+		XSelectInput(display, (Window)winModule->hWnd, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | KeyPressMask | KeyReleaseMask | FocusChangeMask);
 		return tge::main::Error::NONE;
 	}
 
 	void pool(WindowModule *winModule)
 	{
 		const auto display = (Display *)winModule->hInstance;
-		if (!XPending(display))
-			return;
-		XEvent xev;
-		XNextEvent(display, &xev);
-		for (const auto fun : winModule->customFn)
-			((WNDPROC)fun)(xev);
+		while (XPending(display))
+		{
+			XEvent xev;
+			XNextEvent(display, &xev);
+			for (const auto fun : winModule->customFn)
+				((WNDPROC)fun)(xev);
+		}
 	}
 
 	void destroy(WindowModule *winModule)
