@@ -95,7 +95,7 @@ namespace tge::graphics
 
 	int errorHandle(Display *display, XErrorEvent *event)
 	{
-		std::array<char, 200> str;
+		std::array<char, 400> str;
 		XGetErrorText(display, event->error_code, str.data(), str.size());
 		printf("%s\n", str.data());
 		return 1;

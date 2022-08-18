@@ -67,7 +67,6 @@ namespace tge::io
     }
     case ButtonPress:
     {
-      printf("%d\n", event.xbutton.button);
       if (event.xbutton.button == Button4)
       {
         for (const auto io : ios)
