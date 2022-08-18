@@ -71,13 +71,13 @@ namespace tge::io
       if (event.xbutton.button == Button4)
       {
         for (const auto io : ios)
-          io->mouseEvent({500, 500, (int)tge::io::SCROLL});
+          io->mouseEvent({event.xbutton.x, event.xbutton.y, (int)tge::io::SCROLL});
         return 0;
       }
       else if (event.xbutton.button == Button5)
       {
         for (const auto io : ios)
-          io->mouseEvent({-500, -500, (int)tge::io::SCROLL});
+          io->mouseEvent({-event.xbutton.x, -event.xbutton.y, (int)tge::io::SCROLL});
         return 0;
       }
       const auto xParam = event.xbutton.x;
