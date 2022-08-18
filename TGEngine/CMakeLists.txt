@@ -35,7 +35,8 @@ FETCHCONTENT_DECLARE(
 
 FETCHCONTENT_DECLARE(
 	imgui
-	URL https://github.com/ocornut/imgui/archive/refs/tags/v1.83.zip
+	GIT_REPOSITORY https://github.com/ocornut/imgui
+	GIT_TAG v1.88
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -86,11 +87,15 @@ set(ENGINE_DATA
 if(WIN32)
 include_directories("${vulkansdk_SOURCE_DIR}/Include" "${imgui_SOURCE_DIR}")
 link_directories("${vulkansdk_SOURCE_DIR}/Lib")
-list(APPEND 	
+list(APPEND ENGINE_DATA
     "${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp"
 	"${imgui_SOURCE_DIR}/backends/imgui_impl_win32.h"
 )
 else()
+list(APPEND ENGINE_DATA
+    "private/imgui/imgui_impl_x11.cpp"
+	"public/imgui/imgui_impl_x11.h"
+)
 include_directories("usr/include" "${imgui_SOURCE_DIR}")
 endif()
 
