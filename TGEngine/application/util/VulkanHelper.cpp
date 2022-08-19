@@ -1,5 +1,5 @@
 #include "VulkanHelper.hpp"
-
+#define SPR_NO_DEBUG_OUTPUT 1
 #define SPR_NO_GLSL_INCLUDE 1
 #define SPR_NO_STATIC 1
 #define SPR_STATIC extern
@@ -38,9 +38,6 @@ permute::lookup glslLookup = {{"next", next}};
 std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
                   tge::shader::VulkanShaderModule *shader, const CreateInfo& createInfo) {
-
-  glslang::InitializeProcess();
-  util::OnExit exitHandle(&glslang::FinalizeProcess);
   shader::VulkanShaderPipe shaderPipe{};
 
   auto fragment = permute::fromFile<permute::PermuteGLSL>("assets/height.frag");

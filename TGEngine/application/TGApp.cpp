@@ -1,3 +1,4 @@
+#define SPR_NO_DEBUG_OUTPUT 1
 #include "TGApp.hpp"
 #include "module/TGAppGUI.hpp"
 #include <IO/IOModule.hpp>
@@ -22,33 +23,40 @@ using namespace tge::main;
 using namespace tge::graphics;
 using namespace tge;
 
-int main(const int count, const char** strings) {
+int main(const int count, const char **strings)
+{
 	lateModules.push_back(guiModul);
 	lateModules.push_back(ioModul);
 
 	const auto initResult = init();
-	if (initResult != main::Error::NONE) {
+	if (initResult != main::Error::NONE)
+	{
 		printf("Error in init!");
 		return -1;
 	}
-	if (count > 1) {
+	if (count > 1)
+	{
 		readData(strings[1]);
 	}
-	else {
+	else
+	{
 		readData("degree5.dcplt");
 	}
 
-	auto api = (tge::graphics::VulkanGraphicsModule*)getAPILayer();
-	auto shader = (tge::shader::VulkanShaderModule*)api->getShaderAPI();
+	auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
+	auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
 	ioModul->api = api;
 
 	const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
 	ioModul->implTrans = vec;
 
+	glslang::InitializeProcess();
+	util::OnExit exitHandle(&glslang::FinalizeProcess);
+
 	const CreateInfo info = {guiModul->doubleSided};
 	const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader, info);
 	const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
-		shaderOffset, ioModul->mvpMatrix);
+										   shaderOffset, ioModul->mvpMatrix);
 	ioModul->binding = bufferPoolID;
 	ioModul->sendChanges();
 
@@ -59,7 +67,8 @@ int main(const int count, const char** strings) {
 	api->pushLights(1, &light);
 
 	const auto startResult = start();
-	if (startResult != main::Error::NONE) {
+	if (startResult != main::Error::NONE)
+	{
 		printf("Error in start!");
 		return -1;
 	}

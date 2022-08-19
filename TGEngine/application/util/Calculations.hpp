@@ -178,9 +178,7 @@ inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 		const auto& cache = CellEntry::polynomialHeightCache[i];
 		const auto& locals = CellEntry::localPositions[i];
 		auto& cellData = CellEntry::cellDataPerLayer[i];
-#ifdef DEBUG
-		std::unordered_set<InterpolateInfo<>> unorderedSet;
-#endif // DEBUG
+
 		for (size_t c = 0; c < cLayer.size(); c++) {
 			auto maxY = flim.min();
 			auto minY = flim.max();
@@ -213,15 +211,7 @@ inline glm::vec3 makeData(const float currentY, const int interpolationCount) {
 					interpolations[x + y * partX] = { local1, local2 };
 				}
 			}
-#ifdef DEBUG
-			for (const auto& info : interpolations) {
-				if (unorderedSet.contains(info)) {
-					printf("C: %ld\n", c);
-				}
-			}
-			unorderedSet.insert(begin(interpolations), end(interpolations));
-#endif // DEBUG
-
+			
 			const auto positionsOut = interpolate(calculationInfo, interpolations,
 				pivot, interpolationCount);
 			const auto start = cellData.size();

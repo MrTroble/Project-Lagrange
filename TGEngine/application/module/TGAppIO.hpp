@@ -29,6 +29,7 @@ public:
 	bool dState;
 	bool qState;
 	bool eState;
+	int changeY = 0;
 
 	TGAppIO()
 	{
@@ -68,6 +69,7 @@ public:
 		qState = false;
 		calculateMatrix();
 		sendChanges();
+		tryUpdateY();
 	}
 
 	void mouseEvent(const tge::io::MouseEvent event) override
@@ -117,5 +119,15 @@ public:
 		{
 			qState = true;
 		}
+		if (event.signal == 'R')
+		{
+			changeY = 1;
+		}
+		if (event.signal == 'F')
+		{
+			changeY = -1;
+		}
 	}
+
+	void tryUpdateY();
 };

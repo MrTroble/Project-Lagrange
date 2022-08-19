@@ -503,7 +503,7 @@ public:
       return output;
     try {
       postProcess(output.output, glslLookup);
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(SPR_NO_DEBUG_OUTPUT)
       for (auto &str : output.output) {
         printf("%s\n", str.c_str());
       }
