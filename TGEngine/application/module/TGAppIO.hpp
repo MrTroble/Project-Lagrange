@@ -69,7 +69,7 @@ public:
 		qState = false;
 		calculateMatrix();
 		sendChanges();
-		tryUpdateY();
+		tryUpdateY(deltatime);
 	}
 
 	void mouseEvent(const tge::io::MouseEvent event) override
@@ -129,5 +129,5 @@ public:
 		}
 	}
 
-	void tryUpdateY();
+	void tryUpdateY(float delta);
 };
