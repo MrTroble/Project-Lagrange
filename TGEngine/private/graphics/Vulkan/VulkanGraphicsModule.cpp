@@ -699,9 +699,13 @@ namespace tge::graphics
 		const PipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo(
 			{}, PrimitiveTopology::eTriangleList, false);
 
+		const auto states = {DynamicState::eViewport, DynamicState::eScissor};
+
+		const PipelineDynamicStateCreateInfo dynamicStateInfo({}, states);
+
 		GraphicsPipelineCreateInfo graphicsPipeline(
 			{}, pipe->pipelineShaderStage, &visci, &inputAssemblyCreateInfo, {},
-			&vsci, &rsci, &msci, {}, &colorBlendState, nullptr, nullptr,
+			&vsci, &rsci, &msci, {}, &colorBlendState, &dynamicStateInfo, nullptr,
 			vgm->renderpass, 1);
 		vgm->lightMat = Material(pipe);
 		sapi->addToMaterial(&vgm->lightMat, &graphicsPipeline);
@@ -1187,6 +1191,11 @@ namespace tge::graphics
 
 			currentBuffer.bindPipeline(PipelineBindPoint::eGraphics,
 									   pipelines[lightPipe]);
+
+			currentBuffer.setViewport(0, this->viewport);
+
+			const Rect2D scissor({}, {(uint32_t)viewport.width, (uint32_t)viewport.height});
+			currentBuffer.setScissor(0, scissor);
 
 			const std::array lights = {lightBindings};
 			getShaderAPI()->addToRender(lights.data(), lights.size(),

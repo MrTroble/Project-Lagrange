@@ -180,6 +180,8 @@ void makeVulkan() {
   auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
   auto shader = (tge::shader::VulkanShaderModule *)api->getShaderAPI();
 
+  const auto view = api->viewport;
+  ioModul->aspectRatio = view.width/view.height;
   const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
   ioModul->implTrans = vec;
 
