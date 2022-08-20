@@ -6,11 +6,11 @@ bool isFocused()
 	return guiModul->focused;
 }
 
-void TGAppIO::tryUpdateY(float delta)
+void TGAppIO::tryUpdateY(const double delta)
 {
 	if (this->changeY != 0)
 	{
-		guiModul->currentY += this->changeY * 0.1 * delta;
+		guiModul->currentY += this->changeY * 0.03 * delta;
 		makeVulkan();
 		this->changeY = 0;
 	}

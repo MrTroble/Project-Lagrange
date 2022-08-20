@@ -62,7 +62,7 @@ int main(const int count, const char **strings)
 
 	auto &light = guiModul->light;
 	light.color = glm::vec3(1, 1, 1);
-	light.pos = glm::vec3(0, 100, 0);
+	light.pos = glm::vec3(0, 10, 0);
 	light.intensity = 1.0f;
 	api->pushLights(1, &light);
 

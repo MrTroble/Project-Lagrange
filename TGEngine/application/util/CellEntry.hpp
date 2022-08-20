@@ -34,6 +34,9 @@ extern glm::vec2 minMax;
 // Renderdata
 extern std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 
+extern std::tuple<uint32_t, uint32_t> pipelineInfo;
+extern bool changeSize;
+
 inline void reset() {
   for (auto &toReset : cellsPerLayer)
     toReset.clear();

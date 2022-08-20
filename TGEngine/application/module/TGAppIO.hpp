@@ -129,5 +129,5 @@ public:
 		}
 	}
 
-	void tryUpdateY(float delta);
+	void tryUpdateY(const double delta);
 };

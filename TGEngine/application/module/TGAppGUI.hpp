@@ -42,7 +42,8 @@ public:
 			}
 
 			if (ImGui::CollapsingHeader("Render")) {
-				ImGui::Checkbox("Double sided", &this->doubleSided);
+				if(ImGui::Checkbox("Double sided", &this->doubleSided))
+					CellEntry::changeSize = true;
 			}
 
 			if (ImGui::Button("Apply")) {

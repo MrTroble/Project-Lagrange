@@ -20,6 +20,6 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
 
 uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                       tge::shader::VulkanShaderModule *shader,
-                      uint32_t materialID, uint32_t shaderOffset, glm::mat4 mat,
+                      const uint32_t materialID, const uint32_t shaderOffset, const glm::mat4 &mat,
                       const size_t offset = 0);
 void makeVulkan();
