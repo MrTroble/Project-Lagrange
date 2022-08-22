@@ -1,5 +1,5 @@
 #include "VulkanHelper.hpp"
-#define SPR_NO_DEBUG_OUTPUT 1
+//#define SPR_NO_DEBUG_OUTPUT 1
 #define SPR_NO_GLSL_INCLUDE 1
 #define SPR_NO_STATIC 1
 #define SPR_STATIC extern
@@ -40,8 +40,6 @@ std::tuple<uint32_t, uint32_t>
 createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
                   tge::shader::VulkanShaderModule *shader, const CreateInfo &createInfo)
 {
-  shader::VulkanShaderPipe shaderPipe{};
-
   auto fragment = permute::fromFile<permute::PermuteGLSL>("assets/height.frag");
   permute::glslLookup["min"] = [&](const auto &input)
   {
@@ -58,10 +56,18 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     return {-1, -1};
   }
 
+  auto wireFrag = permute::fromFile<permute::PermuteGLSL>("assets/wire.frag");
+  if (!wireFrag.generate())
+  {
+    for (auto &str : wireFrag.getContent())
+      printf("%s\n", str.c_str());
+    return {-1, -1};
+  }
+
   auto perm = permute::fromFile<permute::PermuteGLSL>(
       "assets/perInstanceVertexShader.vert");
-  std::array<Material, MAX_DEGREE> material;
-  const auto beginShader = shader->pipeInfos.size();
+  std::array<Material, MAX_DEGREE * 2> material;
+  auto beginShader = shader->pipeInfos.size();
   for (size_t i = 0; i < MAX_DEGREE; i++)
   {
     permute::glslLookup["degree"] = [&](const auto &input)
@@ -103,9 +109,9 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     for (const auto &binding : shaderpipe->descriptorLayoutBindings)
     {
       descPoolSizes.push_back(
-          {binding.descriptorType, binding.descriptorCount});
+          {binding.descriptorType, binding.descriptorCount * 2});
     }
-    const vk::DescriptorPoolCreateInfo descPoolCreateInfo({}, 1, descPoolSizes);
+    const vk::DescriptorPoolCreateInfo descPoolCreateInfo({}, 2, descPoolSizes);
     const auto descPool = api->device.createDescriptorPool(descPoolCreateInfo);
     shader->descPools.push_back(descPool);
 
@@ -113,11 +119,21 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
     const auto pipeLayout = api->device.createPipelineLayout(layoutCreateInfo);
     shader->pipeLayouts.push_back(pipeLayout);
     shaderpipe->layoutID = shader->pipeLayouts.size() - 1;
-    material[i].costumShaderData = shaderpipe;
-    material[i].primitiveType = (uint32_t)PrimitiveTopology::eTriangleFan;
-    material[i].doubleSided = createInfo.doubleSided;
+
+    auto &currentMat = material[i * 2];
+    currentMat.costumShaderData = shaderpipe;
+    currentMat.primitiveType = (uint32_t)PrimitiveTopology::eTriangleFan;
+    currentMat.doubleSided = createInfo.doubleSided;
+    auto &nextMat = material[i * 2 + 1];
     shaderpipe->needsDefaultBindings = false;
+
+    const auto generalPipe = new shader::VulkanShaderPipe(*shaderpipe);
+    generalPipe->shader[0] = {wireFrag.getBinary(), vk::ShaderStageFlagBits::eFragment};
+    nextMat.costumShaderData = generalPipe;
+    nextMat.primitiveType = (uint32_t)PrimitiveTopology::eLineStrip;
+
     shader->createBindings(shaderpipe, 1);
+    shader->createBindings(generalPipe, 1);
   }
 
   return {api->pushMaterials(material.size(), material.data()), beginShader};
@@ -126,10 +142,10 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
 uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                       tge::shader::VulkanShaderModule *shader,
                       const uint32_t materialID, const uint32_t shaderOffset, const glm::mat4 &mat,
-                      const size_t offset)
+                      const size_t offset, const CreateInfo &createInfo)
 {
-  std::vector<size_t> sizes = {sizeof(mat)};
-  std::vector<const void *> data = {&mat};
+  std::vector<size_t> sizes = {sizeof(mat), sizeof(mat)};
+  std::vector<const void *> data = {&mat, &mat};
   std::vector<size_t> layer = {};
   for (size_t i = 0; i < MAX_DEGREE; i++)
   {
@@ -154,11 +170,11 @@ uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
 
     shader::BindingInfo info;
     info.binding = 0;
-    info.bindingSet = shader->pipeInfos[shaderOffset + i].descSet;
+    info.bindingSet = shader->pipeInfos[shaderOffset + i * 2].descSet;
     info.type = shader::BindingType::Storage;
-    info.data.buffer.dataID = bufferID + i + 1;
+    info.data.buffer.dataID = bufferID + i + 2;
     info.data.buffer.offset = 0;
-    info.data.buffer.size = sizes[i + 1];
+    info.data.buffer.size = sizes[i + 2];
     infos.push_back(info);
 
     info.binding = 1;
@@ -167,14 +183,35 @@ uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
     info.data.buffer.size = sizes[i];
     infos.push_back(info);
 
+    info.binding = 0;
+    info.bindingSet = shader->pipeInfos[shaderOffset + i * 2 + 1].descSet;
+    info.type = shader::BindingType::Storage;
+    info.data.buffer.dataID = bufferID + i + 2;
+    info.data.buffer.offset = 0;
+    info.data.buffer.size = sizes[i + 2];
+    infos.push_back(info);
+
+    info.binding = 1;
+    info.type = shader::BindingType::UniformBuffer;
+    info.data.buffer.dataID = bufferID + 1;
+    info.data.buffer.size = sizes[i + 1];
+    infos.push_back(info);
+
     RenderInfo renderInfo;
     renderInfo.indexSize = IndexSize::NONE;
-    renderInfo.materialId = materialID + i;
+    renderInfo.materialId = materialID + cLayer * 2;
     renderInfo.firstInstance = 0;
     renderInfo.indexCount = 4;
     renderInfo.instanceCount = CellEntry::cellDataPerLayer[cLayer].size() / 4;
-    renderInfo.bindingID = shaderOffset + i;
+    renderInfo.bindingID = shaderOffset + i * 2;
     actualInfos.push_back(renderInfo);
+
+    if (createInfo.wireFrame)
+    {
+      renderInfo.materialId = materialID + cLayer * 2 + 1;
+      renderInfo.bindingID = shaderOffset + i * 2 + 1;
+      actualInfos.push_back(renderInfo);
+    }
   }
   shader->bindData(infos.data(), infos.size());
   if (actualInfos.size() > 0)
@@ -198,7 +235,7 @@ void makeVulkan()
   const auto vec = makeData(guiModul->currentY, guiModul->interpolation);
   ioModul->implTrans = vec;
 
-  if (CellEntry::changeSize)
+  if (CellEntry::updatePipelines)
   {
     api->device.waitIdle();
     for (size_t i = ioModul->binding; i < api->bufferList.size(); i++)
@@ -211,17 +248,18 @@ void makeVulkan()
 
     CreateInfo createInfo;
     createInfo.doubleSided = guiModul->doubleSided;
+    createInfo.wireFrame = guiModul->wireFrame;
     const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader, createInfo);
     const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
-                                           shaderOffset, ioModul->mvpMatrix, 1);
+                                           shaderOffset, ioModul->mvpMatrix, 1, createInfo);
     ioModul->binding = bufferPoolID;
     ioModul->sendChanges();
     api->pushLights(1, &guiModul->light);
-    CellEntry::changeSize = false;
+    CellEntry::updatePipelines = false;
   }
   else
   {
-    size_t counter = 0;
+    size_t counter = 1;
     for (size_t i = 0; i < MAX_DEGREE; i++)
     {
       const auto &cellLayer = CellEntry::cellDataPerLayer[i];

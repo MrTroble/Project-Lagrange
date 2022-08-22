@@ -12,6 +12,7 @@ using namespace tge;
 
 struct CreateInfo {
     bool doubleSided = false;
+    bool wireFrame = false;
 };
 
 std::tuple<uint32_t, uint32_t>
@@ -21,5 +22,5 @@ createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
 uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
                       tge::shader::VulkanShaderModule *shader,
                       const uint32_t materialID, const uint32_t shaderOffset, const glm::mat4 &mat,
-                      const size_t offset = 0);
+                      const size_t offset, const CreateInfo& createInfo);
 void makeVulkan();

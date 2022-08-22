@@ -53,10 +53,10 @@ int main(const int count, const char **strings)
 	glslang::InitializeProcess();
 	util::OnExit exitHandle(&glslang::FinalizeProcess);
 
-	const CreateInfo info = {guiModul->doubleSided};
+	const CreateInfo info = {guiModul->doubleSided, guiModul->wireFrame};
 	const auto [materialPoolID, shaderOffset] = createShaderPipes(api, shader, info);
 	const auto bufferPoolID = createBuffer(api, shader, materialPoolID,
-										   shaderOffset, ioModul->mvpMatrix);
+										   shaderOffset, ioModul->mvpMatrix, 0, info);
 	ioModul->binding = bufferPoolID;
 	ioModul->sendChanges();
 

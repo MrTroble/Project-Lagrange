@@ -28,6 +28,7 @@ public:
 	Light light;
 	bool focused = false;
 	bool doubleSided = false;
+	bool wireFrame = false;
 
 	void renderGUI() override {
 		if (ImGui::Begin("test")) {
@@ -43,7 +44,9 @@ public:
 
 			if (ImGui::CollapsingHeader("Render")) {
 				if(ImGui::Checkbox("Double sided", &this->doubleSided))
-					CellEntry::changeSize = true;
+					CellEntry::updatePipelines = true;
+				if(ImGui::Checkbox("Wire frame", &this->wireFrame))
+					CellEntry::updatePipelines = true;
 			}
 
 			if (ImGui::Button("Apply")) {

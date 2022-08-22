@@ -15,6 +15,7 @@ public:
 	glm::vec3 scale = glm::vec3(1, 1, 1);
 	glm::mat4 rotation = glm::mat4(1);
 	glm::mat4 mvpMatrix = glm::mat4(1);
+	glm::mat4 mvp2Matrix = glm::mat4(1);
 	glm::mat4 view = glm::mat4(1);
 	glm::vec2 total;
 	float aspectRatio = 1;
@@ -44,12 +45,16 @@ public:
 			glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 		mvpMatrix = projectionMatrix * view *
 					(glm::translate(translation) * rotation * glm::scale(scale) * glm::translate(implTrans));
+		mvp2Matrix = projectionMatrix * view *
+					 (glm::translate(translation + glm::vec3(0, 0, 0.001)) * rotation * glm::scale(scale) * glm::translate(implTrans));
 	}
 
 	void sendChanges()
 	{
 		this->api->changeData(this->binding, &this->mvpMatrix,
 							  sizeof(this->mvpMatrix));
+		this->api->changeData(this->binding + 1, &this->mvp2Matrix,
+							  sizeof(this->mvp2Matrix));
 	}
 
 	void tick(double deltatime) override

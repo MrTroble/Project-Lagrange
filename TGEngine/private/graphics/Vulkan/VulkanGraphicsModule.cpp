@@ -107,7 +107,7 @@ namespace tge::graphics
 			{}, false, LogicOp::eClear, blendAttachment);
 
 		const PipelineDepthStencilStateCreateInfo pipeDepthState(
-			{}, true, true, CompareOp::eLess, false, false, {}, {}, 0, 1);
+			{}, true, true, CompareOp::eLessOrEqual, false, false, {}, {}, 0, 1);
 
 		std::vector<GraphicsPipelineCreateInfo> pipelineCreateInfos;
 		pipelineCreateInfos.reserve(materialcount);

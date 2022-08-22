@@ -7,6 +7,6 @@ std::array<std::vector<glm::vec4>, MAX_DEGREE> cellDataPerLayer;
 std::array<std::vector<double>, MAX_DEGREE> polynomialHeightCache;
 std::array<std::vector<glm::vec2>, MAX_DEGREE> localPositions;
 glm::vec2 minMax;
-bool changeSize;
+bool updatePipelines;
 
 } // namespace CellEntry
