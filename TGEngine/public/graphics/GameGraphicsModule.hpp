@@ -27,6 +27,10 @@ struct NodeInfo {
   size_t parent = UINT64_MAX;
 };
 
+struct FeatureSet {
+  bool wideLines = false;
+};
+
 class GameGraphicsModule : public main::Module {
 
   APILayer *apiLayer;
@@ -44,8 +48,9 @@ class GameGraphicsModule : public main::Module {
 public:
   size_t defaultMaterial;
   tge::shader::ShaderPipe defaultPipe;
+  FeatureSet features;
 
-  GameGraphicsModule(APILayer *apiLayer, WindowModule *winModule);
+  GameGraphicsModule(APILayer *apiLayer, WindowModule *winModule, const FeatureSet &set = {});
 
   _NODISCARD size_t loadModel(const std::vector<char> &data, const bool binary,
                               const std::string &baseDir,

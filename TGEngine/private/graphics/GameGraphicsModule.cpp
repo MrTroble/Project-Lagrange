@@ -401,7 +401,8 @@ inline size_t loadNodes(const Model &model, APILayer *apiLayer,
 }
 
 GameGraphicsModule::GameGraphicsModule(APILayer *apiLayer,
-                                       WindowModule *winModule) {
+                                       WindowModule *winModule, const FeatureSet& features) {
+  this->features = features;
   const auto prop = winModule->getWindowProperties();
   this->apiLayer = apiLayer;
   this->windowModule = winModule;

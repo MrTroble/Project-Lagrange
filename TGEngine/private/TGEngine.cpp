@@ -20,14 +20,14 @@ void fireRecreate() {
     }
 }
 
-Error init() {
+Error init(const graphics::FeatureSet &featureSet) {
   if (isInitialized)
     return error = Error::ALREADY_INITIALIZED;
   winModule = new graphics::WindowModule();
   modules.push_back(winModule);
   usedApiLayer = graphics::getNewVulkanModule();
   modules.push_back(usedApiLayer);
-  gameModule = new graphics::GameGraphicsModule(usedApiLayer, winModule);
+  gameModule = new graphics::GameGraphicsModule(usedApiLayer, winModule, featureSet);
   usedApiLayer->setGameGraphicsModule(gameModule);
   modules.push_back(gameModule);
 

@@ -848,6 +848,7 @@ namespace tge::graphics
 
 	main::Error VulkanGraphicsModule::init()
 	{
+		FeatureSet &features = getGraphicsModule()->features;
 		this->shaderAPI = new VulkanShaderModule(this);
 #pragma region Instance
 		const ApplicationInfo applicationInfo(APPLICATION_NAME, APPLICATION_VERSION,
@@ -946,9 +947,15 @@ namespace tge::graphics
 		if (fndDevExtItr == devextEndItr)
 			return main::Error::SWAPCHAIN_EXT_NOT_FOUND;
 
+		const auto vkFeatures = this->physicalDevice.getFeatures();
+		if (features.wideLines)
+			features.wideLines = vkFeatures.wideLines;
+		vk::PhysicalDeviceFeatures enabledFeatures{};
+		enabledFeatures.wideLines = features.wideLines;
+
 		const char *name = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 		const DeviceCreateInfo deviceCreateInfo({}, 1, &queueCreateInfo, 0, {}, 1,
-												&name);
+												&name, &enabledFeatures);
 		this->device = this->physicalDevice.createDevice(deviceCreateInfo);
 
 		const auto c4Props =

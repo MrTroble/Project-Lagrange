@@ -10,7 +10,7 @@ namespace tge::main {
 
 extern std::vector<Module *> lateModules;
 
-Error init();
+Error init(const graphics::FeatureSet &featureSet = {});
 
 Error start();
 
