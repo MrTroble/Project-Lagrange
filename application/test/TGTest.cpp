@@ -1,6 +1,6 @@
 #include "../TGApp.hpp"
-#include "../application/util/Calculations.hpp"
-#include "../application/util/DataManager.hpp"
+#include "../util/Calculations.hpp"
+#include "../util/DataManager.hpp"
 #include <gtest/gtest.h>
 
 int main(int argv, char** in) {

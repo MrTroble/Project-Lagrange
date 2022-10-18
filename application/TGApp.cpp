@@ -2,7 +2,7 @@
 #include "TGApp.hpp"
 #include "module/TGAppGUI.hpp"
 #include <IO/IOModule.hpp>
-#include <TGEngine.hpp>
+#include < TGEngine.hpp>
 #include <Util.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -40,7 +40,7 @@ int main(const int count, const char **strings)
 	}
 	else
 	{
-		readData("degree5.dcplt");
+		readData("assets/degree5.dcplt");
 	}
 
 	auto api = (tge::graphics::VulkanGraphicsModule *)getAPILayer();
