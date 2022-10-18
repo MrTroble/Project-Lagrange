@@ -306,3 +306,4 @@ dependencies/deps.zip
 /TGEngine/conan.lock
 /build
 .vscode/settings.json
+/out/build/x64-Debug
