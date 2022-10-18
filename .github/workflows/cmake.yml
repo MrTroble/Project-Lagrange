@@ -13,6 +13,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+            submodules: recursive
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
@@ -47,6 +49,8 @@ jobs:
       - name: Update Clang
         run: sudo apt install clang-14 --install-suggests
       - uses: actions/checkout@v3
+        with:
+            submodules: recursive
       - name: Cache
         uses: actions/cache@v3.0.6
         with:
