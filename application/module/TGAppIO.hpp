@@ -39,7 +39,7 @@ public:
 
 	void calculateMatrix()
 	{
-		projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.00001f, 10000.0f);
+		projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.01f, 10000.0f);
 		projectionMatrix[1][1] *= -1;
 		view =
 			glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
