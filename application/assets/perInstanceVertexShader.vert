@@ -5,9 +5,6 @@
   "codes": [
     {
       "code": [
-        "#version 450",
-        "#extension GL_KHR_vulkan_glsl: enable",
-        "",
         "const int maxStepsX = $steps_X ;",
         "const int maxStepsY = $steps_Y ;",
         "const int maxPoints = $allpoints_n ;",

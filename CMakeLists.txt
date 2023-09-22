@@ -1,15 +1,29 @@
-cmake_minimum_required (VERSION 3.12)
+cmake_minimum_required (VERSION 3.15)
 
 project ("Lagrange-Viewer" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+add_compile_definitions(DEBUG=1)
+endif()
+
+if(false)
+add_compile_options("/fsanitize=address")
+add_link_options("/fsanitize=address")
+if(true)
+add_compile_definitions(_DISABLE_VECTOR_ANNOTATION=1)
+add_compile_definitions(_DISABLE_STRING_ANNOTATION=1)
+endif()
+endif()
+
+if(WIN32)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+add_link_options("/ignore:4099")
+else()
+add_compile_options("-fPIC")
+endif()
 
 add_subdirectory(TGEngine)
-
-if(WIN32)  
-add_compile_options("/D_ITERATOR_DEBUG_LEVEL=0" "/MD" "/EHa")
-add_link_options("/ignore:4099")
-endif()
 
 add_executable(TGApp "application/TGApp.cpp" "application/util/CellEntry.cpp" "application/util/VulkanHelper.cpp"  "application/TGAppDef.cpp" "application/module/TGAppIO.cpp")
 target_link_libraries(TGApp PUBLIC tc::TGEngine)

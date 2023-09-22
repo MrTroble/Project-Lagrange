@@ -5,8 +5,6 @@
   "codes": [
     {
       "code": [
-        "#version 460",
-        "",
         "const float maxHeight = $max_H ;",
         "const float minHeight = $min_H ;",
         "layout(location=0) out vec4 COLOR;",

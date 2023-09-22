@@ -5,22 +5,26 @@
 #include <graphics/GameShaderModule.hpp>
 #include <graphics/vulkan/VulkanModuleDef.hpp>
 #include <graphics/vulkan/VulkanShaderModule.hpp>
+#include <tuple>
+#include <vector>
 
 using namespace tge::main;
 using namespace tge::graphics;
 using namespace tge;
 
 struct CreateInfo {
-    bool doubleSided = false;
-    bool wireFrame = false;
+  bool doubleSided = false;
+  bool wireFrame = false;
 };
 
-std::tuple<uint32_t, uint32_t>
-createShaderPipes(tge::graphics::VulkanGraphicsModule *api,
-                  tge::shader::VulkanShaderModule *shader, const CreateInfo& createInfo);
+std::tuple<std::vector<TPipelineHolder>, uint32_t> createShaderPipes(
+    tge::graphics::VulkanGraphicsModule *api,
+    tge::shader::VulkanShaderModule *shader, const CreateInfo &createInfo);
 
-uint32_t createBuffer(tge::graphics::VulkanGraphicsModule *api,
-                      tge::shader::VulkanShaderModule *shader,
-                      const uint32_t materialID, const uint32_t shaderOffset, const glm::mat4 &mat,
-                      const size_t offset, const CreateInfo& createInfo);
+std::vector<TDataHolder> createBuffer(
+    tge::graphics::VulkanGraphicsModule *api,
+    tge::shader::VulkanShaderModule *shader,
+    const std::vector<TPipelineHolder> &materials, const uint32_t shaderOffset,
+    glm::mat4 &mat, const TRenderHolder offset, const CreateInfo &createInfo);
+
 void makeVulkan();

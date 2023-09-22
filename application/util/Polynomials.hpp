@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <Error.hpp>
+#include <plog/Logger.h>
 #define THROW(x) throw std::runtime_error(x);
 #define RANGE_CHECK(x) TGE_EXPECT(x <= 1.0 && x >= 0.0, "Input not in range!", 0)
 
